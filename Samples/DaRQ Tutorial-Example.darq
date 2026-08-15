@@ -1,0 +1,62 @@
+/*
+	* This is just a tutorial scenario and will not work
+*/
+
+USE darq\io\file;						// Will attach a core library to the JS engine
+USE "D:\My Libs\Text\Normalization";	// Will attach a third-party library to the JS engine
+
+CONST source = OPENFILE();																	// Using a command of the "darq\io\file" library, which will show an open file dialog
+CONST destination = SAVEFILE "results", "Comma Separated Values Files (*.csv)|*.csv";		// Using a command of the "darq\io\file" library, which will show a save file dialog
+
+const retries = parseInt(prompt("How many retry do you want to do, If it can not fetched?", 2));
+var days = 100;
+
+# dailyChack	// Define a Calllabel to can do it again
+	FOR EACH row OF FILE(source) rows, DO	// A human-readable version of a loop
+		# checkItem DO: // Using colon(':') is some structures like (DO, CallLables) has no effect
+			LET trying be 0;	// You can use BE instead of '=' for more readability
+			TRY	// Start a try block
+				FETCH "api.market.com/search", { 
+					merchandise:row[5],	// The column index 5, you can use DaRQ Selectors in the brackets too
+					type: "json"
+				}
+				THEN // If the fetching promise finished
+					IF FETCHED	// If the data was received successfully
+						FOR EACH item OF RESPONSE.json()	// Access to the RESPONSE object received in this workspace
+							APPEND destination,	// Store new line, row or object on the selected database or file
+							SELECT	// Collect all the cells of an object into a new object
+								"api.market.com" AS Reference,
+								*,
+								item.Main_Price - item.Discount AS Price,
+								(IF item.Count IS 0 "absent" ELSE item.Count) AS Numbers
+								FROM item;
+					ELSE
+						LOAD "www.market.com/search/merchandise="+row[5]
+						THEN	// If the loading promise finished
+							IF LOADED DO	// If the website document is loaded completely
+								FOR EACH item OF ALL "div table>tbody>tr",
+									APPEND destination, 	// Store new row or line on the database
+									COLLECT	// Collect all the cells in an object, exactly like { name:value, ... }
+										"www.market.com" AS Reference,
+										NORMALIZE(CONCAT(item[".company-title>*"], " ")) AS Company_Name,	// To normalize, all elements innerTexts of selected children of item using DaRQ Selector (in the brackets)
+										(NORMALIZE FIRST SPLIT CONCAT(item[".product-title>*"], " "), /\s+co\s*$/gi) AS Product_Name,		// You can use multiple commands sequentially
+										URLDECODE item["img.product-image"].src AS Image,
+										NUMBER item[7]  AS Main_Price,
+										NUMBER(item[":last-child"]) * Main_Price AS Discount,		// You can switch between multiple types of calling commands to solve ambiguities...
+										Main_Price - Discount AS Price,							// You are also able to use the previously named parameters
+										(IF item["td.numbers"] IS 0, "absent", ELSE item["td.numbers"]) AS Numbers;
+								CLICK ON "button#next-page";
+							END;
+							ELSE LOG WARNING, `Could not load the page for the ${row[5]} merchandise!`;
+			OTHERWISE DO		// A simple catch block `catch { }` without needing to handle the exception variable
+				LET allow BE trying++ > retries;
+				LOG (IF allow, WARNING, ELSE ERROR), `Could not fetch data completely for the ${row[5]} merchandise!`;
+				IF allow, checkItem;
+			END;
+		END;
+	END;
+IF --days > 0,
+	WAIT (24 * 60 * 60 * 10000)
+	AND	// You can concatenate two procedures or commands using AND/OR commands for more clarity
+	DOING TRY dailyChack CATCH problem LOG ERROR problem; END()	// To make a callable block then call that
+ELSE STOP BROWSER;	// To close the current BROWSER of this workspace
