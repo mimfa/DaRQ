@@ -377,15 +377,15 @@ In the DaRQ:
             ```js
             POST url, data		// To fetch data from a specified URL
             ```
-        * Go: To send a request to a server and receive its response, without changing the current workspace, using the syntax below:
+        * GO: To send a request to a server and receive its response, without changing the current workspace, using the syntax below:
             ```js
-            Go url			// To load a website from a specified URL in a new window/tab
+            GO url			// To load a website from a specified URL in a new window/tab
             ```
             ```js
-            Go NEXT		    // To open the next window/tab, if it exists
+            GO NEXT		    // To open the next window/tab, if it exists
             ```
             ```js
-            Go BACK		    // To open the previous window/tab, if it exists 
+            GO BACK		    // To open the previous window/tab, if it exists 
             ```
 
 
