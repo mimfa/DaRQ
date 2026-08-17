@@ -1,8 +1,21 @@
 {
   "version": 2,
-  "dgSpecHash": "mPj2lUDk3aKrSEy+qA2NAX3RU8IoAf0dumz8dPxkU7A6RfPKqONnnvN+6WAtq817taM+4wIX02jxgDW4DgkQBQ==",
+  "dgSpecHash": "DMtx2EqnpFyx6DM6A9mFkaBpwRfJUw9TTspy/UzYLi5TZPf0hgBv2H1llLyZDQjhYUPVK+4NpLovT6ljOemahQ==",
   "success": true,
   "projectFilePath": "D:\\Product\\Technology\\MiMFa DaRQ\\MiMFa DaRQ.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\MiMFa\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\10.0.11\\microsoft.bcl.asyncinterfaces.10.0.11.nupkg.sha512",
+    "C:\\Users\\MiMFa\\.nuget\\packages\\microsoft.csharp\\4.7.0\\microsoft.csharp.4.7.0.nupkg.sha512",
+    "C:\\Users\\MiMFa\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\MiMFa\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512",
+    "C:\\Users\\MiMFa\\.nuget\\packages\\system.buffers\\4.6.1\\system.buffers.4.6.1.nupkg.sha512",
+    "C:\\Users\\MiMFa\\.nuget\\packages\\system.io.pipelines\\10.0.11\\system.io.pipelines.10.0.11.nupkg.sha512",
+    "C:\\Users\\MiMFa\\.nuget\\packages\\system.memory\\4.6.3\\system.memory.4.6.3.nupkg.sha512",
+    "C:\\Users\\MiMFa\\.nuget\\packages\\system.numerics.vectors\\4.6.1\\system.numerics.vectors.4.6.1.nupkg.sha512",
+    "C:\\Users\\MiMFa\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.1.2\\system.runtime.compilerservices.unsafe.6.1.2.nupkg.sha512",
+    "C:\\Users\\MiMFa\\.nuget\\packages\\system.text.encodings.web\\10.0.11\\system.text.encodings.web.10.0.11.nupkg.sha512",
+    "C:\\Users\\MiMFa\\.nuget\\packages\\system.text.json\\10.0.11\\system.text.json.10.0.11.nupkg.sha512",
+    "C:\\Users\\MiMFa\\.nuget\\packages\\system.threading.tasks.extensions\\4.6.3\\system.threading.tasks.extensions.4.6.3.nupkg.sha512"
+  ],
   "logs": []
 }

@@ -1,10 +1,12 @@
 // Converted from src/engine/DaRQ/Compiler/Core/Program.ts
 using System;
 
-namespace DaRQ.Compiler.Core
+namespace MiMFa.DaRQ.Compiler.Core
 {
-    public class Program
+    public class Program : Node
     {
-        // NOTE: This is a library Program representation, not app entry point
+        public Program(string? source = null, params Node?[] children) : base(new Token(TokenType.PathData, source), NodeType.Program, children: children)
+        {
+        }
     }
 }

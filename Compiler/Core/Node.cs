@@ -3,15 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DaRQ.Compiler.Core
+namespace MiMFa.DaRQ.Compiler.Core
 {
     public class Node
     {
         public Token Token { get; set; }
         public NodeType Type { get; set; }
 
-        protected Node parent = null;
-        public Node Parent => parent;
+        protected Node? parent = null;
+        public Node? Parent => parent;
 
         protected List<Node> children = new List<Node>();
         public IList<Node> Children
@@ -45,18 +45,18 @@ namespace DaRQ.Compiler.Core
                 else Add(value);
             }
         }
-        public Node First => children.Count > 0 ? children[0] : null;
-        public Node Last => children.Count > 0 ? children[children.Count - 1] : null;
+        public Node? First => children.Count > 0 ? children[0] : null;
+        public Node? Last => children.Count > 0 ? children[children.Count - 1] : null;
 
         public Node FirstLeaf => First != null ? First.FirstLeaf : this;
         public Node LastLeaf => Last != null ? Last.LastLeaf : this;
 
-        public Node(Token token = null, NodeType? type = null, AccessType accessType = AccessType.Unknown, IEnumerable<Node> children = null, Node parent = null)
+        public Node(Token? token = null, NodeType? type = null, AccessType accessType = AccessType.Unknown, IEnumerable<Node?>? children = null, Node? parent = null)
         {
             Token = token ?? new Token();
             Type = type ?? (token != null ? NodeType.Unknown : NodeType.None);
             this.parent = parent;
-            Children = children?.ToList() ?? new List<Node>();
+            Children = (from v in children where v != null select v).ToList() ?? new List<Node>();
             AccessType = accessType;
         }
 
@@ -70,7 +70,7 @@ namespace DaRQ.Compiler.Core
             return this;
         }
 
-        public Node Clone(Node node = null)
+        public Node Clone(Node? node = null)
         {
             var n = node ?? this;
             return new Node(n.Token ?? Token, n.Type != 0 ? n.Type : Type, n.AccessType != 0 ? n.AccessType : AccessType, n.Children?.Select(c => c.Clone()).ToList(), n.parent ?? parent);
@@ -165,9 +165,9 @@ namespace DaRQ.Compiler.Core
         }
 
         public Node ForceChild(int index) => children[index];
-        public Node Child(int index) => children.Count > index ? children[index] : null;
+        public Node? Child(int index) => children.Count > index ? children[index] : null;
 
-        public IEnumerable<Node> Flat(Func<Node, bool> aggregator = null)
+        public IEnumerable<Node> Flat(Func<Node, bool>? aggregator = null)
         {
             if (aggregator == null || aggregator(this)) yield return this;
             foreach (var child in children)

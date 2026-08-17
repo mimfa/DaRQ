@@ -1,53 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <RootNamespace>MiMFa_DaRQ</RootNamespace>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>MiMFa.DaRQ</RootNamespace>
     <Nullable>enable</Nullable>
+    <!-- Use SDK default inclusion of source files to avoid duplicate Compile entries -->
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <Company>MiMFa</Company>
+    <Product>DaRQ</Product>
+    <Authors>Mohammad Fathi (MiMFa)</Authors>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Compiler\Assembler\index.cs" />
-    <Compile Include="Compiler\Assembler\NodeWalker.cs" />
-    <Compile Include="Compiler\Core\AccessType.cs" />
-    <Compile Include="Compiler\Core\Diagnostic.cs" />
-    <Compile Include="Compiler\Core\Location.cs" />
-    <Compile Include="Compiler\Core\Node.cs" />
-    <Compile Include="Compiler\Core\NodeType.cs" />
-    <Compile Include="Compiler\Core\Program.cs" />
-    <Compile Include="Compiler\Core\Range.cs" />
-    <Compile Include="Compiler\Core\Severity.cs" />
-    <Compile Include="Compiler\Core\Token.cs" />
-    <Compile Include="Compiler\Core\TokenType.cs" />
-    <Compile Include="Compiler\Core\Version.cs" />
-    <Compile Include="Compiler\Core\WalkerBase.cs" />
-    <Compile Include="Compiler\Executor\index.cs" />
-    <Compile Include="Compiler\Generator\index.cs" />
-    <Compile Include="Compiler\index.cs" />
-    <Compile Include="Compiler\Input.cs" />
-    <Compile Include="Compiler\IStage.cs" />
-    <Compile Include="Compiler\Options.cs" />
-    <Compile Include="Compiler\Output.cs" />
-    <Compile Include="Compiler\Parser\index.cs" />
-    <Compile Include="Compiler\Parser\TokenWalker.cs" />
-    <Compile Include="Compiler\Preprocessor\index.cs" />
-    <Compile Include="Compiler\ResourceProvider.cs" />
-    <Compile Include="Compiler\Tokenizer\CodeWalker.cs" />
-    <Compile Include="Compiler\Tokenizer\index.cs" />
-    <Compile Include="DaRQ-Compiler\Assembler.cs" />
-    <Compile Include="DaRQ-Compiler\Generator.cs" />
-    <Compile Include="DaRQ-Compiler\index.cs" />
-    <Compile Include="DaRQ-Compiler\Parser.cs" />
-    <Compile Include="DaRQ-Compiler\Preprocessor.cs" />
-    <Compile Include="DaRQ-Compiler\Tokenizer.cs" />
-    <Compile Include="JavaScript-Compiler\Assembler.cs" />
-    <Compile Include="JavaScript-Compiler\Executor.cs" />
-    <Compile Include="JavaScript-Compiler\Generator.cs" />
-    <Compile Include="JavaScript-Compiler\index.cs" />
-    <Compile Include="JavaScript-Compiler\Parser.cs" />
-    <Compile Include="JavaScript-Compiler\Preprocessor.cs" />
-    <Compile Include="JavaScript-Compiler\Tokenizer.cs" />
+    <PackageReference Include="System.Text.Json" Version="10.0.11" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>
+
 
   <ItemGroup>
     <None Include="Library\DaRQ\Global.js" />

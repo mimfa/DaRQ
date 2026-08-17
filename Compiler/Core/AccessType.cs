@@ -1,7 +1,7 @@
 // Converted from src/engine/DaRQ/Compiler/Core/AccessType.ts
 using System;
 
-namespace DaRQ.Compiler.Core
+namespace MiMFa.DaRQ.Compiler.Core
 {
     [Flags]
     public enum AccessType

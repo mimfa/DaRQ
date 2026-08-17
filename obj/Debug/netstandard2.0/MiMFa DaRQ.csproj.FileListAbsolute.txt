@@ -1,0 +1,5 @@
+D:\Product\Technology\MiMFa DaRQ\obj\Debug\netstandard2.0\MiMFa DaRQ.csproj.AssemblyReference.cache
+D:\Product\Technology\MiMFa DaRQ\obj\Debug\netstandard2.0\MiMFa DaRQ.GeneratedMSBuildEditorConfig.editorconfig
+D:\Product\Technology\MiMFa DaRQ\obj\Debug\netstandard2.0\MiMFa DaRQ.AssemblyInfoInputs.cache
+D:\Product\Technology\MiMFa DaRQ\obj\Debug\netstandard2.0\MiMFa DaRQ.AssemblyInfo.cs
+D:\Product\Technology\MiMFa DaRQ\obj\Debug\netstandard2.0\MiMFa DaRQ.csproj.CoreCompileInputs.cache

@@ -1,7 +1,7 @@
 // Converted from src/engine/DaRQ/Compiler/Options.ts
 using System;
 
-namespace DaRQ.Compiler
+namespace MiMFa.DaRQ.Compiler
 {
     public class Options
     {

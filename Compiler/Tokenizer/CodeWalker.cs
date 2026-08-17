@@ -1,18 +1,18 @@
 // Converted from src/engine/DaRQ/Compiler/Tokenizer/CodeWalker.ts
 using System;
 using System.Linq;
-using DaRQ.Compiler.Core;
+using MiMFa.DaRQ.Compiler.Core;
 
-namespace DaRQ.Compiler.Tokenizer
+namespace MiMFa.DaRQ.Compiler.Tokenizer
 {
-    public class CodeWalker : DaRQ.Compiler.Core.WalkerBase<char>
+    public class CodeWalker : MiMFa.DaRQ.Compiler.Core.WalkerBase<char>
     {
         private int line = 1;
         private int column = 1;
 
         public Location Location => new Location(this.Position, this.line, this.column);
 
-        public CodeWalker(string content, string source = null) : base(content?.ToCharArray() ?? new char[0], source)
+        public CodeWalker(string content, string? source = null) : base(content?.ToCharArray() ?? new char[0], source)
         {
         }
 

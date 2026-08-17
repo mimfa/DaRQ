@@ -1,7 +1,7 @@
 // Converted from src/engine/DaRQ/Compiler/Core/Token.ts
 using System;
 
-namespace DaRQ.Compiler.Core
+namespace MiMFa.DaRQ.Compiler.Core
 {
     public class Token
     {
@@ -9,14 +9,14 @@ namespace DaRQ.Compiler.Core
         public TokenType Type { get; set; }
         public Location Location { get; set; }
 
-        public Token(TokenType? type = null, string value = null, Location location = null)
+        public Token(TokenType? type = null, string? value = null, Location? location = null)
         {
             Value = value ?? string.Empty;
             Type = type ?? (string.IsNullOrEmpty(value) ? TokenType.None : TokenType.Unknown);
             Location = location ?? new Location();
         }
 
-        public Token Update(TokenType? Type = null, string Value = null, Location Location = null)
+        public Token Update(TokenType? Type = null, string? Value = null, Location? Location = null)
         {
             this.Value = Value ?? this.Value;
             this.Type = Type ?? this.Type;
@@ -24,7 +24,7 @@ namespace DaRQ.Compiler.Core
             return this;
         }
 
-        public Token Clone(TokenType? Type = null, string Value = null, Location Location = null)
+        public Token Clone(TokenType? Type = null, string? Value = null, Location? Location = null)
         {
             return new Token(Type ?? this.Type, Value ?? this.Value, Location ?? this.Location);
         }
@@ -32,7 +32,7 @@ namespace DaRQ.Compiler.Core
         public bool Is(params TokenType[] tokenTypes)
         {
             foreach (var tokenType in tokenTypes)
-                if (((int)(this.Type) & (int)tokenType) == (int)tokenType)
+                if ((int)(this.Type & tokenType) == (int)tokenType)
                     return true;
             return false;
         }

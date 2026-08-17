@@ -1,7 +1,7 @@
 // Converted from src/engine/DaRQ/Compiler/Core/Range.ts
 using System;
 
-namespace DaRQ.Compiler.Core
+namespace MiMFa.DaRQ.Compiler.Core
 {
     public class Range
     {

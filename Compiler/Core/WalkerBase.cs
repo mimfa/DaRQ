@@ -3,15 +3,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DaRQ.Compiler.Core
+namespace MiMFa.DaRQ.Compiler.Core
 {
     public interface IWalker<T>
     {
-        string Source { get; }
+        string? Source { get; }
         int Position { get; }
         int Length { get; }
         bool IsRunning { get; }
         bool IsEnded { get; }
+        T Current { get; }
 
         IWalker<T> Move(int count);
         IWalker<T> Reset(int position);
@@ -20,7 +21,7 @@ namespace DaRQ.Compiler.Core
 
     public abstract class WalkerBase<T> : IWalker<T>
     {
-        public string Source { get; }
+        public string? Source { get; }
 
         protected T[] content;
         public T[] Content => content;
@@ -29,12 +30,12 @@ namespace DaRQ.Compiler.Core
         public int Position => position;
         public int Length => content.Length;
 
-        public T Current => Peek(0);
+        public T Current => Peek(0)!;
 
         public bool IsRunning => position >= 0 && position < content.Length;
         public bool IsEnded => position >= content.Length;
 
-        protected WalkerBase(T[] content, string source = null)
+        protected WalkerBase(T[] content, string? source = null)
         {
             this.content = content ?? new T[0];
             this.Source = source;
@@ -44,12 +45,12 @@ namespace DaRQ.Compiler.Core
         {
             var index = position + offset;
             if (index >= 0 && index < content.Length) return content[index];
-            return default;
+            return default!;
         }
 
         public T PeekThe(Func<T, bool> aggregator, int offset = 0)
         {
-            T p = default;
+            T p = default!;
             int c = 0;
             if (offset < 0)
             {
@@ -70,14 +71,15 @@ namespace DaRQ.Compiler.Core
             return p;
         }
 
-        public T Walk()
+        public virtual T Walk()
         {
+            if (IsEnded) return default!;
             return content[position++];
         }
 
         public T WalkTo(Func<T, bool> aggregator)
         {
-            T p = default;
+            T p = default!;
             while (!aggregator(p = Walk()) && IsRunning) ;
             return p;
         }

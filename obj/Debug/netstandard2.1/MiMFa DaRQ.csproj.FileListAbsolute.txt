@@ -1,0 +1,11 @@
+D:\Product\Software\Extension\MiMFa Scraper\src\engine\DaRQ-CS\obj\Debug\netstandard2.1\MiMFa DaRQ.csproj.AssemblyReference.cache
+D:\Product\Software\Extension\MiMFa Scraper\src\engine\DaRQ-CS\obj\Debug\netstandard2.1\MiMFa DaRQ.GeneratedMSBuildEditorConfig.editorconfig
+D:\Product\Software\Extension\MiMFa Scraper\src\engine\DaRQ-CS\obj\Debug\netstandard2.1\MiMFa DaRQ.AssemblyInfoInputs.cache
+D:\Product\Software\Extension\MiMFa Scraper\src\engine\DaRQ-CS\obj\Debug\netstandard2.1\MiMFa DaRQ.AssemblyInfo.cs
+D:\Product\Software\Extension\MiMFa Scraper\src\engine\DaRQ-CS\obj\Debug\netstandard2.1\MiMFa DaRQ.csproj.CoreCompileInputs.cache
+D:\Product\Software\Extension\MiMFa Scraper\src\engine\DaRQ-CS\obj\Debug\netstandard2.1\MiMFa DaRQ.sourcelink.json
+D:\Product\Software\Extension\MiMFa Scraper\src\engine\DaRQ-CS\bin\Debug\netstandard2.1\MiMFa DaRQ.deps.json
+D:\Product\Software\Extension\MiMFa Scraper\src\engine\DaRQ-CS\bin\Debug\netstandard2.1\MiMFa DaRQ.dll
+D:\Product\Software\Extension\MiMFa Scraper\src\engine\DaRQ-CS\bin\Debug\netstandard2.1\MiMFa DaRQ.pdb
+D:\Product\Software\Extension\MiMFa Scraper\src\engine\DaRQ-CS\obj\Debug\netstandard2.1\MiMFa DaRQ.dll
+D:\Product\Software\Extension\MiMFa Scraper\src\engine\DaRQ-CS\obj\Debug\netstandard2.1\MiMFa DaRQ.pdb

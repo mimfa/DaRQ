@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DaRQ.Compiler
+namespace MiMFa.DaRQ.Compiler
 {
     public interface IResourceEntry
     {
@@ -17,7 +17,7 @@ namespace DaRQ.Compiler
         bool Exists(string path);
         bool IsAbsolute(string path);
         string Normalize(string path);
-        string Resolve(string path, string basePath = null);
+        string Resolve(string path, string? basePath = null);
         string Combine(params string[] paths);
         string DirectoryName(string path);
         string FileName(string path);
@@ -33,7 +33,7 @@ namespace DaRQ.Compiler
         public virtual bool Exists(string path) => throw new NotSupportedException("The compiler does not support file systems in this provider.");
         public virtual bool IsAbsolute(string path) => throw new NotSupportedException();
         public virtual string Normalize(string path) => throw new NotSupportedException();
-        public virtual string Resolve(string path, string basePath = null) => throw new NotSupportedException();
+        public virtual string Resolve(string path, string? basePath = null) => throw new NotSupportedException();
         public virtual string Combine(params string[] paths) => throw new NotSupportedException();
         public virtual string DirectoryName(string path) => throw new NotSupportedException();
         public virtual string FileName(string path) => throw new NotSupportedException();

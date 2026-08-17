@@ -1,4 +1,4 @@
-# DaRQ (Declarative Automation Rule Query Language)
+# DaRQ (Declarative Automation Rules Query Language)
 
 DaRQ is a deterministic, reusable, human-readable, extensible command language for acquiring, transforming, analyzing, and automating data workflows. A structured intermediate representation (IR) between natural language and executable JavaScript scraping logic. In other words, DaRQ is a procedural, English-like domain-specific language that compiles deterministically into JavaScript browser automation code.
 * Scripts written by this technology called "Map" will parse into complex and optimized pure JavaScript code to be interpreted in the browser.

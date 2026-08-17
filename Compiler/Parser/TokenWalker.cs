@@ -1,13 +1,13 @@
 // Converted from src/engine/DaRQ/Compiler/Parser/TokenWalker.ts
 using System;
 using System.Collections.Generic;
-using DaRQ.Compiler.Core;
+using MiMFa.DaRQ.Compiler.Core;
 
-namespace DaRQ.Compiler.Parser
+namespace MiMFa.DaRQ.Compiler.Parser
 {
     public class TokenWalker : Walker<Token>
     {
-        public TokenWalker(IEnumerable<Token> tokens, string source = null) : base(tokens, source)
+        public TokenWalker(IEnumerable<Token> tokens, string? source = null) : base(tokens, source)
         {
         }
 
@@ -21,7 +21,7 @@ namespace DaRQ.Compiler.Parser
             return Current != null && Current.IsMatch(values);
         }
 
-        public Token Peek(int offset = 0, params TokenType[] ofTypes)
+        public Token? Peek(int offset = 0, params TokenType[] ofTypes)
         {
             Token p;
             int o = offset;
@@ -34,12 +34,18 @@ namespace DaRQ.Compiler.Parser
             return null;
         }
 
-        public Token PeekProcedure(int offset = 0)
+        public Token? PeekProcedure(int offset = 0)
         {
-            return Peek(offset, TokenType.Procedure);
+            Token p;
+            int o = offset;
+            while ((p = base.Peek(o++)) != null)
+            {
+                if (p.IsProcedure()) return p;
+            }
+            return null;
         }
 
-        public new TokenWalker Move(int count = 1, params TokenType[] ofTypes)
+        public TokenWalker Move(int count = 1, params TokenType[] ofTypes)
         {
             Token p;
             int number = 0;
@@ -70,7 +76,7 @@ namespace DaRQ.Compiler.Parser
 
         public TokenWalker MoveToProcedure(int count = 1)
         {
-            return MoveTo(t => t.IsProcedure(), count);
+            return (TokenWalker)MoveTo(t => t.IsProcedure(), count);
         }
 
         public Token Walk(params TokenType[] ofTypes)
