@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>MiMFa.DaRQ</RootNamespace>
     <Nullable>enable</Nullable>
     <!-- Use SDK default inclusion of source files to avoid duplicate Compile entries -->
