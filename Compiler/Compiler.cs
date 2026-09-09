@@ -1,10 +1,10 @@
-// Converted from src/engine/DaRQ/Compiler/index.ts
-using MiMFa.DaRQ.Compiler;
-using MiMFa.DaRQ.Compiler.Core;
+﻿using MiMFa.Compiler;
+using MiMFa.Compiler.Core;
+using MiMFa.Compiler.Resource;
 using System;
 using System.Collections.Generic;
 
-namespace MiMFa.DaRQ.Compiler
+namespace MiMFa.Compiler
 {
     public class Compiler
     {
@@ -14,11 +14,12 @@ namespace MiMFa.DaRQ.Compiler
 
         public Options Options { get; }
 
-        public Input? Input { get; set; }
-        public Output? Output { get; set; }
-        public ResourceProvider? ResourceProvider { get; set; }
+        public event LogEventHandler Log = null;
+        public Input Input { get; set; }
+        public Output Output { get; set; }
+        public ResourceProvider ResourceProvider { get; set; }
 
-        public Compiler(IStage[]? stages, Options? options = null, ResourceProvider? io = null)
+        public Compiler(IStage[] stages, Options options = null, ResourceProvider io = null)
         {
             this.Options = options ?? new Options();
             this.ResourceProvider = io ?? new ResourceProvider();
@@ -27,26 +28,39 @@ namespace MiMFa.DaRQ.Compiler
 
         public Output Compile(Input input)
         {
-            this.Input = input;
+            Input = input;
             object data = input.Content;
-            var errors = new List<string>();
-            try
+            Output = new Output(Input.Source);
+            //try
             {
-                int sn = 0;
+                bool isfirst = string.IsNullOrEmpty(Input.Source);
+                string source = System.IO.Path.GetFullPath("DaRQ");
+                if (isfirst) OnLog("Compile started", LogStatus.Success);
+                else OnLog($"Compiling the {Input.Source.Replace(source, ".\\DaRQ")}", LogStatus.Message);
                 foreach (var stage in stages)
                 {
-                    Console.WriteLine($"Stage {++sn} is started");
+                    //string sn = stage.GetType().Name;
+                    //OnLog($"{sn} stage is started");
                     data = stage.Transform(data, this);
-                    Console.WriteLine($"Stage {sn} is ended");
+                    //OnLog($"{sn} stage is ended");
+                    OnLog(" .", null);
                 }
-                return this.Output = new Output(data?.ToString() ?? string.Empty, this.Input.Source, errors.ToArray());
+                Output.Content = data?.ToString() ?? string.Empty;
+                if (isfirst) OnLog("Compile finished", LogStatus.Success);
+                else OnLog(" ✔️ ", null);
+                return Output;
             }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine(e.Message);
-                errors.Add(e.Message);
-                return this.Output = new Output(string.Empty, this.Input.Source, errors.ToArray());
-            }
+            //catch (Exception e)
+            //{
+            //    OnLog(" ❌ ", null);
+            //    OnLog(e.Message, LogStatus.Error);
+            //    return Output.Error(e);
+            //}
         }
-    }
+
+        public void OnLog(string message = "", LogStatus? status = LogStatus.Info, DateTime? time = null)
+        {
+            if (Log != null) Log(this, new LogEventArgs(message, status, time));
+        }
+    } 
 }

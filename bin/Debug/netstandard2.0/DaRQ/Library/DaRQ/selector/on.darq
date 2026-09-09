@@ -1,0 +1,3 @@
+command on(query = null, source = null) {
+    if (!query) return on;
+}

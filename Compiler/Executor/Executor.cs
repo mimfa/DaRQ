@@ -1,10 +1,27 @@
-// Converted from src/engine/DaRQ/Compiler/Executor/index.ts
+using MiMFa.Compiler.Core;
+using MiMFa.Compiler.Model;
 using System;
 
-namespace MiMFa.DaRQ.Compiler.ExecutorSupport
+namespace MiMFa.Compiler.Executor
 {
-    public static class ExecutorEntry
+    public abstract class Executor : IStage
     {
-        // Placeholder
+        public virtual Compiler Compiler { get; set; }
+
+        public virtual bool Initialize(MiMFa.Compiler.Compiler compiler)
+        {
+            if (compiler != null) this.Compiler = compiler;
+            return true;
+        }
+        public virtual object Transform(object input, MiMFa.Compiler.Compiler compiler)
+        {
+            if (!Initialize(compiler)) return null;
+            var node = input as Node;
+            return ExecuteCode(node);
+        }
+        protected virtual string ExecuteCode(Node node)
+        {
+            return node?.Token?.Value ?? "";
+        }
     }
 }

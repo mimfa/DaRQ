@@ -3,3 +3,28 @@ D:\Product\Technology\MiMFa DaRQ\obj\Debug\netstandard2.0\MiMFa DaRQ.GeneratedMS
 D:\Product\Technology\MiMFa DaRQ\obj\Debug\netstandard2.0\MiMFa DaRQ.AssemblyInfoInputs.cache
 D:\Product\Technology\MiMFa DaRQ\obj\Debug\netstandard2.0\MiMFa DaRQ.AssemblyInfo.cs
 D:\Product\Technology\MiMFa DaRQ\obj\Debug\netstandard2.0\MiMFa DaRQ.csproj.CoreCompileInputs.cache
+D:\Product\Technology\MiMFa DaRQ Standard\obj\Debug\netstandard2.0\MiMFa DaRQ.csproj.AssemblyReference.cache
+D:\Product\Technology\MiMFa DaRQ Standard\obj\Debug\netstandard2.0\MiMFa DaRQ.GeneratedMSBuildEditorConfig.editorconfig
+D:\Product\Technology\MiMFa DaRQ Standard\obj\Debug\netstandard2.0\MiMFa DaRQ.AssemblyInfoInputs.cache
+D:\Product\Technology\MiMFa DaRQ Standard\obj\Debug\netstandard2.0\MiMFa DaRQ.AssemblyInfo.cs
+D:\Product\Technology\MiMFa DaRQ Standard\obj\Debug\netstandard2.0\MiMFa DaRQ.csproj.CoreCompileInputs.cache
+D:\Product\Technology\MiMFa DaRQ Standard\bin\Debug\netstandard2.0\MiMFa DaRQ.deps.json
+D:\Product\Technology\MiMFa DaRQ Standard\bin\Debug\netstandard2.0\MiMFa DaRQ.dll
+D:\Product\Technology\MiMFa DaRQ Standard\bin\Debug\netstandard2.0\MiMFa DaRQ.pdb
+D:\Product\Technology\MiMFa DaRQ Standard\obj\Debug\netstandard2.0\MiMFa DaRQ.dll
+D:\Product\Technology\MiMFa DaRQ Standard\obj\Debug\netstandard2.0\MiMFa DaRQ.pdb
+D:\Product\Technology\MiMFa DaRQ\bin\Debug\netstandard2.0\MiMFa DaRQ.deps.json
+D:\Product\Technology\MiMFa DaRQ\bin\Debug\netstandard2.0\MiMFa DaRQ.dll
+D:\Product\Technology\MiMFa DaRQ\bin\Debug\netstandard2.0\MiMFa DaRQ.pdb
+D:\Product\Technology\MiMFa DaRQ\obj\Debug\netstandard2.0\MiMFa DaRQ.dll
+D:\Product\Technology\MiMFa DaRQ\obj\Debug\netstandard2.0\MiMFa DaRQ.pdb
+D:\Product\Technology\MiMFa DaRQ\bin\Debug\netstandard2.0\DaRQ\Library\darq\data\resource.darq
+D:\Product\Technology\MiMFa DaRQ\bin\Debug\netstandard2.0\DaRQ\Library\darq\web\transfer.darq
+D:\Product\Technology\MiMFa DaRQ\bin\Debug\netstandard2.0\DaRQ\Library\darq\convert\types.darq
+D:\Product\Technology\MiMFa DaRQ\bin\Debug\netstandard2.0\DaRQ\Library\darq\selector\all.darq
+D:\Product\Technology\MiMFa DaRQ\bin\Debug\netstandard2.0\DaRQ\Library\darq\selector\on.darq
+D:\Product\Technology\MiMFa DaRQ\bin\Debug\netstandard2.0\DaRQ\Library\darq\selector\one.darq
+D:\Product\Technology\MiMFa DaRQ\bin\Debug\netstandard2.0\DaRQ\Library\darq\workspace\functions.darq
+D:\Product\Technology\MiMFa DaRQ\bin\Debug\netstandard2.0\DaRQ\Library\darq\workspace\noises.darq
+D:\Product\Technology\MiMFa DaRQ\bin\Debug\netstandard2.0\DaRQ\Library\darq\workspace\operators.darq
+D:\Product\Technology\MiMFa DaRQ\bin\Debug\netstandard2.0\DaRQ\Library\darq\workspace\variables.darq

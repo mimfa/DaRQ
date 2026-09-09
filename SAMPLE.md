@@ -8,15 +8,15 @@
 		* This is just a tutorial scenario and will not work
 	*/
 
-	USE darq\io\file;	// Will attach a core library to the JS engine
+	USE darq\data\file;	// Will attach a core library to the JS engine
 	/*
 		* You can add a core or third-party library to the JS engine using the USE command.
 		* If there is no spaces between the address, you can write that without any quotes.
 		* This library will be parsed and attached to the JS engine before execution.
 		* The finding package procedure in this command will check one of the three steps:
-			1. If the "darq\io\file.darq" file exists, it will be parsed and attached to the JS engine.
-			2. If the "darq\io\file.js" file exists, it will be attached directly to the JS engine.
-			3. If the "darq\io\file" directory exists, it will USE all files or directories in that.
+			1. If the "darq\data\file.darq" file exists, it will be parsed and attached to the JS engine.
+			2. If the "darq\data\file.js" file exists, it will be attached directly to the JS engine.
+			3. If the "darq\data\file" directory exists, it will USE all files or directories in that.
 	*/
 	USE "D:\My Libs\Text\Normalization";	// Will attach a third-party library to the JS engine
 

@@ -1,0 +1,10 @@
+command resource = {
+	get : function (path = null, encoding = null) {
+		if(!path) return this.get;
+		return compiler.ResourceProvider.GetFileContents(path, encoding);
+	},
+	set : function(path = null, object = null) {
+		if(!path) return this.set;
+		return compiler.ResourceProvider.SetFileContents(path, object);
+	}
+};

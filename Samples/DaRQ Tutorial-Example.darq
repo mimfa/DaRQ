@@ -2,7 +2,7 @@
 	* This is just a tutorial scenario and will not work
 */
 
-USE darq\io\file;						// Will attach a core library to the JS engine
+USE darq\data\file;						// Will attach a core library to the JS engine
 USE "D:\My Libs\Text\Normalization";	// Will attach a third-party library to the JS engine
 
 CONST source = OPENFILE();																	// Using a command of the "darq\io\file" library, which will show an open file dialog

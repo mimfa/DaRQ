@@ -1,7 +1,7 @@
 // Converted from src/engine/DaRQ/Compiler/Options.ts
 using System;
 
-namespace MiMFa.DaRQ.Compiler
+namespace MiMFa.Compiler
 {
     public class Options
     {
@@ -11,7 +11,7 @@ namespace MiMFa.DaRQ.Compiler
         public bool GenerateSourceMap { get; set; } = false;
         public string Escape { get; set; } = "\\";
         public string WarpSeparator { get; set; } = " ";
-        public string LineSeparator { get; set; } = "\n";
+        public string LineSeparator { get; set; } = Environment.NewLine;
 
         public string MakeIndention(int indentions) => new string('\t', indentions);
         public string MakeNewLine(int indentions) => LineSeparator + MakeIndention(indentions);

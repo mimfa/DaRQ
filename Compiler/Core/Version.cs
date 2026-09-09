@@ -1,7 +1,7 @@
 // Converted from src/engine/DaRQ/Compiler/Core/Version.ts
 using System;
 
-namespace MiMFa.DaRQ.Compiler.Core
+namespace MiMFa.Compiler.Core
 {
     public class Version
     {

@@ -1,9 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <RootNamespace>MiMFa.DaRQ</RootNamespace>
-    <Nullable>enable</Nullable>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>MiMFa</RootNamespace>
     <!-- Use SDK default inclusion of source files to avoid duplicate Compile entries -->
     <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
     <Company>MiMFa</Company>
@@ -12,18 +11,51 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Json" Version="10.0.11" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
 
   <ItemGroup>
-    <None Include="Library\DaRQ\Global.js" />
     <None Include="LICENSE" />
     <None Include="README.md" />
     <None Include="SAMPLE.md" />
     <None Include="Samples\DaRQ Tutorial-Example.darq" />
     <None Include="Samples\DaRQ Tutorial-Example.js" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <None Update="DaRQ\Library\darq\selector\on.darq">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DaRQ\Library\darq\selector\one.darq">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DaRQ\Library\darq\workspace\operators.darq">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DaRQ\Library\darq\workspace\noises.darq">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DaRQ\Library\darq\workspace\functions.darq">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DaRQ\Library\darq\workspace\variables.darq">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DaRQ\Library\darq\selector\all.darq">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DaRQ\Library\darq\web\transfer.darq">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DaRQ\Library\darq\data\resource.darq">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DaRQ\Library\darq\convert\types.darq">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

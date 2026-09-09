@@ -11,9 +11,9 @@ const destination = SAVEFILE("results", "Comma Separated Values Files (*.csv)|*.
 const retries = parseInt(prompt("How many retry do you want to do, If it can not fetched?", 2));
 var days = 100;
 
-dailyChack = () => {	// Define a label to can do it again
+(dailyChack = (() => {	// Define a label to can do it again
 	for (const row of FILE(source).rows) {	// A human-readable version of a loop
-		checkItem = () => {
+		(checkItem = (() => {
 			let trying = 0;
 			try {	// Start a try block
 				FETCH("api.market.com/search", {
@@ -62,11 +62,9 @@ dailyChack = () => {	// Define a label to can do it again
 				LOG((allow ? WARNING : ERROR)(`Could not fetch data completely for the ${ONE(5, row)} merchandise!`));
 				if (allow) checkItem();
 			}
-		}
-		checkItem();
+		}))();
 	}
-}
-dailyChack();
+}))();
 if (--days > 0)
 	WAIT(24 * 60 * 60 * 10000)
 		&&	// You can concatenate two procedures or commands using AND/OR commands for more clarity

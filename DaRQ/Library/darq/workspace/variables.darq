@@ -1,0 +1,3 @@
+reserve window = "window";
+reserve document = "window.document";
+reserve console = "window.console";
