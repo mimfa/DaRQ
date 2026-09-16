@@ -9,9 +9,7 @@ namespace MiMFa.Compiler.Model
     {
         public Token Token { get; set; }
         public NodeType Type { get; set; }
-
-        protected Node parent = null;
-        public Node Parent => parent;
+        public Node Parent { get; protected set; }
 
         protected List<Node> children = new List<Node>();
         public IList<Node> Children
@@ -25,6 +23,7 @@ namespace MiMFa.Compiler.Model
         }
 
         public AccessType AccessType { get; set; }
+        public int Location { get; set; } = -1;
 
         public int Count => children.Count;
         public Node ForceFirst
@@ -45,36 +44,38 @@ namespace MiMFa.Compiler.Model
                 else Add(value);
             }
         }
-        public Node First => children.Count > 0 ? children[0] : null;
-        public Node Last => children.Count > 0 ? children[children.Count - 1] : null;
+        public Node First => children.Count > 0 ? children.FirstOrDefault(v => !v.IsEmpty()) : null;
+        public Node Last => children.Count > 0 ? children.LastOrDefault(v=>!v.IsEmpty()) : null;
 
         public Node FirstLeaf => First != null ? First.FirstLeaf : this;
         public Node LastLeaf => Last != null ? Last.LastLeaf : this;
 
-        public Node(Token token = null, NodeType? type = null, params Node[] children) : this(token, type, AccessType.Unknown, children) { }
-        public Node(Token token = null, NodeType? type = null, AccessType accessType = AccessType.Unknown, IEnumerable<Node> children = null, Node parent = null)
+        public Node(Token token = null, NodeType? type = null, int location = -1, params Node[] children) : this(token, type, AccessType.Unknown, location, children) { }
+        public Node(Token token = null, NodeType? type = null, params Node[] children) : this(token, type, AccessType.Unknown, -1, children) { }
+        public Node(Token token = null, NodeType? type = null, AccessType accessType = AccessType.Unknown, int location = -1, IEnumerable<Node> children = null, Node parent = null)
         {
             Token = token ?? new Token();
             Type = type ?? (token != null ? NodeType.Unknown : NodeType.None);
-            this.parent = parent;
+            Parent = parent;
             Children = children == null? new List<Node>() : children.ToList() ?? new List<Node>();
+            Location = location;
             AccessType = accessType;
         }
 
-        public Node Update(Node node)
+        public Node Update(Token token = null, NodeType? type = null, AccessType? accessType = null, int? location = null, IEnumerable<Node> children = null, Node parent = null)
         {
-            Token = node.Token ?? Token;
-            Type = node.Type != 0 ? node.Type : Type;
-            parent = node.parent ?? parent;
-            Children = node.Children ?? Children;
-            AccessType = node.AccessType != 0 ? node.AccessType : AccessType;
+            Token = token ?? Token;
+            Type = type ?? Type;
+            Parent = parent ?? parent;
+            Children = (children ?? Children).ToList();
+            Location = location ?? Location;
+            AccessType = accessType ?? AccessType;
             return this;
         }
 
-        public Node Clone(Node node = null)
+        public Node Clone(Token token = null, NodeType? type = null, AccessType? accessType = null, int? location = null, IEnumerable<Node> children = null, Node parent = null)
         {
-            var n = node ?? this;
-            return new Node(n.Token ?? Token, n.Type != 0 ? n.Type : Type, n.AccessType != 0 ? n.AccessType : AccessType, n.Children?.Select(c => c.Clone()).ToList(), n.parent ?? parent);
+            return new Node(token ?? Token, type?? Type, accessType??AccessType, location??Location, children?.Select(c => c.Clone()).ToList(), parent ?? parent);
         }
 
         public bool Is(params NodeType[] nodeTypes)
@@ -83,7 +84,12 @@ namespace MiMFa.Compiler.Model
                 if (((int)Type & (int)nt) == (int)nt) return true;
             return false;
         }
+        public bool Has(Func<Node, bool> condition)
+        {
+            return condition(this) || Children.Any(n=>n.Has(condition));
+        }
 
+        public bool IsEmpty() => Is(NodeType.None, NodeType.Unknown) && Token.Is(TokenType.None, TokenType.Unknown) && Count <= 0 && Token.IsMatch("");
         public bool IsProcedure() => !Is(NodeType.None);
         public bool IsIndependent() => Is(NodeType.Program, NodeType.Rule);
         public bool IsDependent() => Is(NodeType.Compute);
@@ -92,7 +98,7 @@ namespace MiMFa.Compiler.Model
         {
             if (node != null)
             {
-                node.parent = this;
+                node.Parent = this;
                 children.Add(node);
             }
             return this;
@@ -103,7 +109,7 @@ namespace MiMFa.Compiler.Model
             if (node == null) return true;
             var index = children.IndexOf(node);
             if (index < 0) return false;
-            node.parent = null;
+            node.Parent = null;
             children.RemoveAt(index);
             return true;
         }
@@ -112,7 +118,7 @@ namespace MiMFa.Compiler.Model
         {
             if (node != null)
             {
-                node.parent = this;
+                node.Parent = this;
                 children = children.Take(index).Concat(new[] { node }).Concat(children.Skip(index)).ToList();
             }
             return this;
@@ -129,7 +135,7 @@ namespace MiMFa.Compiler.Model
             {
                 if (selector(children[0]))
                 {
-                    children[0].parent = null;
+                    children[0].Parent = null;
                     children.RemoveAt(0);
                 }
                 else
@@ -148,7 +154,7 @@ namespace MiMFa.Compiler.Model
                 var l = children.Count - 1;
                 if (selector(children[l]))
                 {
-                    children[l].parent = null;
+                    children[l].Parent = null;
                     children.RemoveAt(l);
                 }
                 else
@@ -160,14 +166,9 @@ namespace MiMFa.Compiler.Model
             return this;
         }
 
-        public Node TrimSeparators()
-        {
-            if (Is(NodeType.Block) && Token.IsMatch("{")) return this;
-            return Trim(n => n.Count <= 0 && n.Parent?.Is(NodeType.Block) == false && n.Token.Is(TokenType.SeparatorSymbol, TokenType.TerminatorSymbol));
-        }
-
         public Node ForceChild(int index) => Child(index)??new Node();
         public Node Child(int index) => children.Count > index ? children[index] : null;
+        public Node Ancestor(Func<Node, bool> aggregator) => Parent == null? null: (aggregator(Parent) ? Parent : Parent.Ancestor(aggregator));
 
         public IEnumerable<Node> Flat(Func<Node, bool> aggregator = null)
         {
@@ -191,7 +192,8 @@ namespace MiMFa.Compiler.Model
 
         public Node Revise(Func<Node, Node> visitor)
         {
-            Update(visitor(this));
+            var n = visitor(this);
+            Update(n.Token, n.Type, n.AccessType, n.Location, n.Children, n.Parent);
             var c = Count;
             for (int i = 0; i < c; i++)
                 children[i].Revise(visitor);

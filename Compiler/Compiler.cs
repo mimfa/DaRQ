@@ -19,43 +19,47 @@ namespace MiMFa.Compiler
         public Output Output { get; set; }
         public ResourceProvider ResourceProvider { get; set; }
 
-        public Compiler(IStage[] stages, Options options = null, ResourceProvider io = null)
+        public Compiler(IStage[] stages, Options options = null, ResourceProvider resourceProvider = null)
         {
-            this.Options = options ?? new Options();
-            this.ResourceProvider = io ?? new ResourceProvider();
             this.stages = new List<IStage>(stages ?? Array.Empty<IStage>());
+            this.Options = options ?? new Options();
+            this.ResourceProvider = resourceProvider ?? new ResourceProvider();
         }
 
         public Output Compile(Input input)
         {
+            bool isfirst = Input == null;
             Input = input;
             object data = input.Content;
             Output = new Output(Input.Source);
-            //try
+            string sn = null;
+            if (isfirst) OnLog("Compile started", LogStatus.Subject);
+            try
             {
-                bool isfirst = string.IsNullOrEmpty(Input.Source);
                 string source = System.IO.Path.GetFullPath("DaRQ");
-                if (isfirst) OnLog("Compile started", LogStatus.Success);
-                else OnLog($"Compiling the {Input.Source.Replace(source, ".\\DaRQ")}", LogStatus.Message);
+                if (!string.IsNullOrWhiteSpace(Input.Source)) OnLog($"Compiling the {Input.Source.Replace(source, ".\\DaRQ")}", LogStatus.Message);
                 foreach (var stage in stages)
                 {
-                    //string sn = stage.GetType().Name;
-                    //OnLog($"{sn} stage is started");
+                    sn = stage.GetType().Name;
+                    if (isfirst) OnLog($"{sn} stage is checking...", LogStatus.Info);
                     data = stage.Transform(data, this);
-                    //OnLog($"{sn} stage is ended");
-                    OnLog(" .", null);
+                    if (isfirst) OnLog($"{sn} stage tasks completed. ✔️ ", LogStatus.Success);
+                    else OnLog(" .", null);
                 }
                 Output.Content = data?.ToString() ?? string.Empty;
-                if (isfirst) OnLog("Compile finished", LogStatus.Success);
-                else OnLog(" ✔️ ", null);
+                if (!isfirst) OnLog(" ✔️ ", null);
                 return Output;
             }
-            //catch (Exception e)
-            //{
-            //    OnLog(" ❌ ", null);
-            //    OnLog(e.Message, LogStatus.Error);
-            //    return Output.Error(e);
-            //}
+            catch (Exception e)
+            {
+                if (isfirst) OnLog($"{sn} stage is not completed! ❌ ", LogStatus.Error);
+                else OnLog($" ❌ ", null);
+                OnLog(e.Message, LogStatus.Error);
+                return Output.Error(e);
+            }
+            finally {
+                if (isfirst) OnLog("Compile finished", LogStatus.Subject);
+            }
         }
 
         public void OnLog(string message = "", LogStatus? status = LogStatus.Info, DateTime? time = null)

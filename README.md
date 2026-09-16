@@ -25,7 +25,7 @@ DaRQ has **five** main principles:
 
 ## Main Syntax
 In the DaRQ:
-* Everything is is built upon four+1 fundamental concepts: DaRQ **Structures**, **Commands**, **Reserves**, **Selectors**, and Workspace **Variables**.
+* Everything is is built upon five fundamental concepts: DaRQ **Structures**, **Commands**, **Reserves**, **Selectors**, and **Handlers**.
     * **Structures** define the grammar.
     * **Commands** perform actions.
     * **Reserves** represent all reserved-words or noise-words defined for DaRQ.
@@ -34,25 +34,24 @@ In the DaRQ:
 * Using predefined structures and commands, you will be able to write your procedure more clearly, more human-readable, and more flexibly.
 * Case statements of DaRQ are very flexible (case-relieve), instead of being somewhere:
     * Case-insensitive:
-        * All JS statements, such as IF, FUNCTION, LET, etc.
-        * All DaRQ statements, such as FOR EACH, TRY TO, OTHERWISE, etc.
-        * All DaRQ workspace variables, such as BROWSER, WINDOW, RESPONSE, etc.
-        * All DaRQ global variables, such as POST_METHOD, GET_METHOD, THAT, BACK, etc.
-        * All DaRQ reserved-words, such as FROM, AND, BE etc.
-        * All DaRQ built-in commands, ALL, USE, RESERVE, etc.
-        * Multiple of the most important window variables, such as DOCUMENT, CONSOLE, SCREEN, etc.
-        * Multiple of the most important window functions, such as ALERT, CONFIRM, PROMPT, etc.
-        * All third-party commands, FILE, FOLDER, TEXT, etc.
-        * All user-defined commands.
-        * All user-defined reserved-words.
+        * All JS structures, such as IF, FUNCTION, LET, etc.
+        * All DaRQ or third-party structures, such as BEGIN, USE, RESERVE, etc.
+        * All DaRQ or third-party commands, such as APPEND, COLLECT, POST, etc.
+        * All DaRQ or third-party reserveds, such as FROM, AND, WITH etc.
+        * All DaRQ or third-party selectors, such as ALL, ONE, ANY, etc.
+        * All DaRQ or third-party handlers, such as BROWSER, WINDOW, LOAD, etc.
+            * Multiple of the most important interface variables, such as DOCUMENT, CONSOLE, SCREEN, etc.
+            * Multiple of the most important interface functions, such as ALERT, CONFIRM, PROMPT, etc.
     * Case-sensitive:
         * All user-defined functions/variables/constants.
         * All objects' functions/variables/constants (almost everything is written after a dot('.')).
 
+---
+
 ### Structures:
-The DaRQ engine makes multiple predefined structures, which the user cannot override.
+Instead of supporting all JS structures, DaRQ engine contains some special structures.
 * Built into the compiler.
-* They define the grammar and cannot be overridden (IF, FOR, COMMAND, USE, NOISE, ALL, ONE, ON, etc.)
+* They define the grammar and cannot be overridden (IF, FOR, COMMAND, USE, RESERVE, WILL, BEGIN, DOING, etc.)
 * Multiple of the most important DaRQ Structures are:
 
 #### Conditions
@@ -67,6 +66,7 @@ The DaRQ engine makes multiple predefined structures, which the user cannot over
     else 
         js-procedure;
     ```
+* All other of JS conditonal structures (such as switch/case, ternary) are available as the same.
 
 #### Iterations
 * Working with a collection based iterations
@@ -121,9 +121,12 @@ The DaRQ engine makes multiple predefined structures, which the user cannot over
 #### Blockings
 * To make a DaRQ procedures-block
     ```js
+    BEGIN procedures END;
+    ```
+    ```js
     DO procedures END;
     ```
-    It will compile to:
+    They will compile to:
     ```js
     {
         js-procedures
@@ -157,7 +160,7 @@ The DaRQ engine makes multiple predefined structures, which the user cannot over
 #### Threadings
 * To have a multi-thread program, you can make and manage promises
     ```js
-    PROMISE procedure THEN procedure; OTHERWISE procedure; ANYWAY procedure;
+    WILL procedure THEN procedure; OTHERWISE procedure; ANYWAY procedure;
     ```
     It will compile to:
     ```js
@@ -168,7 +171,7 @@ The DaRQ engine makes multiple predefined structures, which the user cannot over
     ```
 
 #### Collections
-* To work in collections
+* To filter collections
     ```js
     array WHERE condition
     ```
@@ -176,6 +179,7 @@ The DaRQ engine makes multiple predefined structures, which the user cannot over
     ```js
     js-array.filter(data=>js-condition)
     ```
+* To sort collections
     ```js
     array ORDER BY key1, key2
     ```
@@ -185,6 +189,7 @@ The DaRQ engine makes multiple predefined structures, which the user cannot over
         .sort((a, b)=>(a,b)=>a.js-key1>b.js-key1?1:a.js-key1==b.js-key1?0:-1)
         .sort((a, b)=>(a,b)=>a.js-key2>b.js-key2?1:a.js-key2==b.js-key2?0:-1)
     ```
+* To slice collections
     ```js
     array LIMIT number, count
     ```
@@ -194,6 +199,7 @@ The DaRQ engine makes multiple predefined structures, which the user cannot over
     ```
     ...
 
+---
 
 ### Commands:
 All commands represent executable operations.
@@ -205,18 +211,18 @@ All commands represent executable operations.
     * All third-party commands (you add them to your Map using the USE statement).
     * All user-defined commands (You defined using the COMMAND statement).
 * The user-defined command will be accessible exactly like other global commands, too.
-* You can define commands in three ways:
+* You can define commands in four ways:
     * Action
     * Function
     * Definition
+    * Delegation
 
 #### Action Command
 * By action command there will make a simple callable, but with these features:
-    * All action commands must defiine globally.
+    * All action commands must be defined globally.
     * They will have a special case-insensitive commandName.
     * They will call immediately after definition once.
     * Will be able to call again, just using the name without any parentesis.
-    * The `commandName` will be added to the JS parser of the DaRQ engine.
 * The main syntax to define a special action commands:
     ```js
     #commandName procedure;
@@ -240,11 +246,10 @@ All commands represent executable operations.
 
 #### Function Command
 * Every function command behaves like a JavaScript function while following several conventions:
-    * All function commands must defiine globally.
+    * All function commands must be defined globally.
     * They will have a special case-insensitive commandName.
     * All inputs of each command should be optional. So ensure every parameter has a default value.
     * If the command has no returned output, it should return itself (specially when there is not inputted arguments). 
-    * The `commandName` will be added to the JS parser of the DaRQ engine.
 * The main syntax to define a special function commands:
     ```js
         COMMAND commandName(input1=value1, ...) {	// All inputs of each command must have a default value
@@ -288,9 +293,8 @@ All commands represent executable operations.
 
 #### Definition Command
 * Every definition command behaves like a JavaScript object while following several conventions:
-    * All definition commands must defiine globally.
+    * All definition commands must be defined globally.
     * They will have a special case-insensitive commandName.
-    * The `commandName` will be added to the JS parser of the DaRQ engine.
 * The main syntax to define a special definition commands:
     ```js
         COMMAND commandName = {
@@ -316,6 +320,36 @@ All commands represent executable operations.
     commandName.js-propertykey1
     ```
 
+#### Delegation Command
+* The simplest but valuable type of commands.
+* Every delegation command behaves like a simple JavaScript variable while following several conventions:
+    * All delegation commands must be defined globally.
+    * They will have a special case-insensitive commandName.
+    * All words, after being used only one time, a stuck acceptor sign `@` will convert to a delegation command.
+    * They can convert everything (constant, variable, function, class, etc.), even after their definition.
+    * They will not change the behavior of the converted thing. 
+ * The main syntax to make then call a special delegation commands is:
+    ```js
+        var test1Var = "The test value #1";
+        console.log(test1Var); // You should use case-sensitively
+        console.log(@test1Var); // You should use case-sensitively (But made it case-insensitive after a sticked acceptor sign `@`)
+        console.log(TEST1var); // Its a delegation command and is case-insensitive now
+            
+        var @test2Var = "The test value #2"; // You can define everything case-insensitive the first time using a sticked acceptor sign `@`
+        console.log(Test2VAR); // Its a delegation command and is case-insensitive now
+    ```
+    It will compile to:
+    ```js
+        var test1Var = "The test value #1";
+        console.log(test1Var);
+        console.log(test1Var);
+        console.log(test1Var);
+            
+        var @test2Var = "The test value #2";
+        console.log(test2Var);
+    ```
+
+---
 
 ### Reserves:
 DaRQ allows optional readability words that improve the natural flow of the language. They will affect only the parser and contain no JavaScript code. These can be one of two groups below:
@@ -356,9 +390,9 @@ DaRQ allows optional readability words that improve the natural flow of the lang
         ```js
         RESERVE the;
         // Other procedures
-        CLICK ON THE #nextbutton
+        CLICK ALL THE #nextbutton
         // With the same meaning
-        CLICK ON #nextbutton
+        CLICK ALL #nextbutton
         ```
         Or:
         ```js
@@ -370,6 +404,7 @@ DaRQ allows optional readability words that improve the natural flow of the lang
         ```
     * Parser will skip those specified words before parsing by default.
 
+---
 
 ### Selectors:
 Selectors describe what should be selected, but not only DOM elements, potentially anything.
@@ -383,10 +418,10 @@ Selectors describe what should be selected, but not only DOM elements, potential
     ONE selector						// To select one element using the specified selector from the DOCUMENT
     ```
     ```js
-    ON selector					    	// To select all/one elements using the specified selector from the DOCUMENT
+    ANY selector				    	// To select all/one elements using the specified selector from the DOCUMENT
     ```
     ```js
-    ALL/ONE/ON selector FROM parent 	// To select all/one from the parent element/object/array
+    ALL/ONE/ANY selector FROM parent 	// To select all/one from the parent element/object/array
     ```
     ```js
     resource[selector]				    // To select one item using the specified selector on the resource, the resource can be an element/object/array
@@ -425,11 +460,12 @@ Selectors describe what should be selected, but not only DOM elements, potential
         12							// The index of the child
         ```
 
+---
 
-### Workspaces:
+### Handlers:
 There are multiple defined variables accessible globally, which users can interact with.
-* A very small set of them defined bult-in (APPLICATION, BROWSER, WINDOW, TAB, DOCUMENT, RESPONSE, THAT, ...)
-* Some of the global variables that will update based on the current status are named Workspace, including:
+* A very small set of them defined bult-in (APPLICATION, BROWSER, WINDOW, TAB, DOCUMENT, RESPONSE, ITS, ...)
+* Some of the global variables that will update based on the current status are named Handler Identifiers, including:
     ```js
     BROWSER 			    // The current browser used in this thread
     ```
@@ -452,27 +488,30 @@ There are multiple defined variables accessible globally, which users can intera
     FETCHED			        // The current response used in this thread was received successfully or not
     ```
     ```js
-    THAT				    // The output of the previous execution will keep on that
+    DATA				    // The root of iterated objects
     ```
-* Multiple workspace variables will update in the current thread, based on the two commands FETCH/LOAD status.
-    * FETCH: To send a request to a server and receive its response, and update the workspace based on that, using the syntax below:
+    ```js
+    ITS				        // The current object or class will accessible through this one
+    ```
+* Multiple structures will update in the current thread, based on the two commands FETCH/LOAD status.
+    * FETCH: To send a request to a server and receive its response, and update the handler identifiers based on that, using the syntax below:
         ```js
-        FETCH url, data, method		// To fetch data from a specified URL, then update the Workspace
+        FETCH url, data, method		// To fetch data from a specified URL, then update the handler identifiers
         ```
-    * LOAD: To open a website in the current window, and update the workspace based on that, using the syntax below:
+    * LOAD: To open a website in the current window, and update the handler identifiers based on that, using the syntax below:
         ```js
-        LOAD url		// To load a website from a specified URL in the current window/tab, and then update the Workspace
-        ```
-        ```js
-        LOAD NEXT		// To load a website from a specified URL in the current window/tab, and then update the Workspace
-        ```
-        ```js
-        LOAD BACK		// To load a website from a specified URL in the current window/tab, and then update the Workspace
+        LOAD url		// To load a website from a specified URL in the current window/tab, and then update the handler
         ```
         ```js
-        LOAD			// To update the Workspace based on the current window/tab statements
+        LOAD NEXT		// To load a website from a specified URL in the current window/tab, and then update the handler
         ```
-* If you want to work in your browser, window, or so on, without changing the current workspace, use the following commands:
+        ```js
+        LOAD BACK		// To load a website from a specified URL in the current window/tab, and then update the handler
+        ```
+        ```js
+        LOAD			// To update the Workspace identifiers based on the current window/tab statements
+        ```
+* If you want to work in your browser, window, or so on, without changing the current handler structures, use the following commands:
     * GET: To send a GET request to a server and receive its response, using the syntax below:
         ```js
         GET url, data		// To fetch data from a specified URL
@@ -481,7 +520,7 @@ There are multiple defined variables accessible globally, which users can intera
         ```js
         POST url, data		// To fetch data from a specified URL
         ```
-    * GO: To send a request to a server and receive its response, without changing the current workspace, using the syntax below:
+    * GO: To send a request to a server and receive its response, without changing the current handler identifiers, using the syntax below:
         ```js
         GO url			// To load a website from a specified URL in a new window/tab
         ```

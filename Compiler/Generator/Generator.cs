@@ -38,23 +38,25 @@ namespace MiMFa.Compiler.Generator
         {
             string code = null;
             if (node.Is(NodeType.Rule)) code = GenerateRuleCode(node, walker);
-            if (code == null && node.Is(NodeType.Procedure)) code = GenerateProcedureCode(node, walker);
+            if (code == null && node.Is(NodeType.Program)) code = GenerateProgramCode(node, walker);
+            if (code == null && node.Is(NodeType.Section)) code = GenerateSectionCode(node, walker);
             if (code == null && node.Is(NodeType.Compute)) code = GenerateComputeCode(node, walker);
+            if (code == null && node.Is(NodeType.Procedure)) code = GenerateProcedureCode(node, walker);
             if (code == null && node.Is(NodeType.Plain)) code = GeneratePlainCode(node, walker);
             if (code == null && node.Is(NodeType.Block)) code = GenerateBlockCode(node, walker);
             if (code == null && node.Is(NodeType.Define)) code = GenerateDefineCode(node, walker);
             if (code == null && node.Is(NodeType.Call)) code = GenerateCallCode(node, walker);
             if (code == null && node.Is(NodeType.Helper)) code = GenerateHelperCode(node, walker);
-            if (code == null && node.Is(NodeType.Program)) code = GenerateProgramCode(node, walker);
             if (code == null && !node.Is(NodeType.None)) code = GenerateUnknownCode(node, walker);
             return code;
         }
 
         protected abstract string GenerateProgramCode(Node node, NodeWalker walker);
-        protected abstract string GenerateRuleCode(Node node, NodeWalker walker);
-        protected abstract string GenerateProcedureCode(Node node, NodeWalker walker);
+        protected abstract string GenerateSectionCode(Node node, NodeWalker walker);
         protected abstract string GenerateComputeCode(Node node, NodeWalker walker);
+        protected abstract string GenerateProcedureCode(Node node, NodeWalker walker);
         protected abstract string GeneratePlainCode(Node node, NodeWalker walker);
+        protected abstract string GenerateRuleCode(Node node, NodeWalker walker);
         protected abstract string GenerateBlockCode(Node node, NodeWalker walker);
         protected abstract string GenerateDefineCode(Node node, NodeWalker walker);
         protected abstract string GenerateCallCode(Node node, NodeWalker walker);

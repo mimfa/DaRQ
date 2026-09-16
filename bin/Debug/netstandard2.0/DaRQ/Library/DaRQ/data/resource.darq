@@ -1,3 +1,4 @@
+// To Impliment all resource related commands
 command resource = {
 	get : function (path = null, encoding = null) {
 		if(!path) return this.get;

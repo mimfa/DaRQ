@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MiMFa.Compiler.Core;
 
 namespace MiMFa.Compiler.Walker
 {
@@ -88,6 +89,10 @@ namespace MiMFa.Compiler.Walker
             return this;
         }
 
+        public virtual IWalker<T> Remove(Location location, int count = 1)
+        {
+            return Remove(location.Index, count);
+        }
         public virtual IWalker<T> Remove(int start = -1, int count = 1)
         {
             return Replace(start < 0 ? Position : start, count, new T[0]);
@@ -106,6 +111,10 @@ namespace MiMFa.Compiler.Walker
             return this;
         }
 
+        public virtual IWalker<T> Replace(Location location, int count, params T[] replacement)
+        {
+            return Replace(location.Index, count, replacement);
+        }
         public virtual IWalker<T> Replace(int start, int count, params T[] replacement)
         {
             var list = new List<T>();

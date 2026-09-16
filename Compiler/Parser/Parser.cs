@@ -40,17 +40,8 @@ namespace MiMFa.Compiler.Parser
         {
             var token = walker.Walk();
             Node latest = null;
-            if (latest == null && token.Is(TokenType.Statement))
-                foreach (var node in ParseStatementToken(token, walker))
-                    yield return latest = node;
-            if (latest == null && token.Is(TokenType.Access))
-                foreach (var node in ParseAccessToken(token, walker))
-                    yield return latest = node;
             if (latest == null && token.Is(TokenType.Structure))
                 foreach (var node in ParseStructureToken(token, walker))
-                    yield return latest = node;
-            if (latest == null && token.Is(TokenType.Symbol))
-                foreach (var node in ParseSymbolToken(token, walker))
                     yield return latest = node;
             if (latest == null && token.Is(TokenType.Scope))
                 foreach (var node in ParseScopeToken(token, walker))
@@ -58,14 +49,29 @@ namespace MiMFa.Compiler.Parser
             if (latest == null && token.Is(TokenType.Data))
                 foreach (var node in ParseDataToken(token, walker))
                     yield return latest = node;
-            if (latest == null && token.Is(TokenType.Facilitator))
-                foreach (var node in ParseFacilitatorToken(token, walker))
+            if (latest == null && token.Is(TokenType.Symbol))
+                foreach (var node in ParseSymbolToken(token, walker))
                     yield return latest = node;
             if (latest == null && token.Is(TokenType.Keyword))
                 foreach (var node in ParseKeywordToken(token, walker))
                     yield return latest = node;
             if (latest == null && token.Is(TokenType.Comment))
                 foreach (var node in ParseCommentToken(token, walker))
+                    yield return latest = node;
+            if (latest == null && token.Is(TokenType.Start))
+                foreach (var node in ParseStartToken(token, walker))
+                    yield return latest = node;
+            if (latest == null && token.Is(TokenType.Prefix))
+                foreach (var node in ParsePrefixToken(token, walker))
+                    yield return latest = node;
+            if (latest == null && token.Is(TokenType.Middle))
+                foreach (var node in ParseMiddleToken(token, walker))
+                    yield return latest = node;
+            if (latest == null && token.Is(TokenType.Suffix))
+                foreach (var node in ParseSuffixToken(token, walker))
+                    yield return latest = node;
+            if (latest == null && token.Is(TokenType.End))
+                foreach (var node in ParseEndToken(token, walker))
                     yield return latest = node;
             if (latest == null && token.Is(TokenType.None))
                 yield return new Node { Token = token, Type = NodeType.None };
@@ -75,15 +81,17 @@ namespace MiMFa.Compiler.Parser
             if (latest == null) yield return new Node { Token = token, Type = NodeType.Unknown };
         }
 
-        protected abstract IEnumerable<Node> ParseStatementToken(Token token, TokenWalker walker);
-        protected abstract IEnumerable<Node> ParseAccessToken(Token token, TokenWalker walker);
         protected abstract IEnumerable<Node> ParseStructureToken(Token token, TokenWalker walker);
-        protected abstract IEnumerable<Node> ParseSymbolToken(Token token, TokenWalker walker);
         protected abstract IEnumerable<Node> ParseScopeToken(Token token, TokenWalker walker);
         protected abstract IEnumerable<Node> ParseDataToken(Token token, TokenWalker walker);
-        protected abstract IEnumerable<Node> ParseFacilitatorToken(Token token, TokenWalker walker);
+        protected abstract IEnumerable<Node> ParseSymbolToken(Token token, TokenWalker walker);
         protected abstract IEnumerable<Node> ParseKeywordToken(Token token, TokenWalker walker);
         protected abstract IEnumerable<Node> ParseCommentToken(Token token, TokenWalker walker);
+        protected abstract IEnumerable<Node> ParseStartToken(Token token, TokenWalker walker);
+        protected abstract IEnumerable<Node> ParsePrefixToken(Token token, TokenWalker walker);
+        protected abstract IEnumerable<Node> ParseMiddleToken(Token token, TokenWalker walker);
+        protected abstract IEnumerable<Node> ParseSuffixToken(Token token, TokenWalker walker);
+        protected abstract IEnumerable<Node> ParseEndToken(Token token, TokenWalker walker);
         protected abstract IEnumerable<Node> ParseUnknownToken(Token token, TokenWalker walker);
     }
 }

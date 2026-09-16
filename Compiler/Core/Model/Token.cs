@@ -39,9 +39,7 @@ namespace MiMFa.Compiler.Model
         }
 
         public bool IsProcedure() => !string.IsNullOrWhiteSpace(Value) && !Is(TokenType.None, TokenType.Comment);
-        public bool IsIndependent() => Is(TokenType.Statement, TokenType.Access);
-        public bool IsDependent() =>  IsMatch("[", "(") || Is(TokenType.ConcatenatorSymbol, TokenType.OperatorSymbol, TokenType.Data, TokenType.Facilitator) && !IsMatch("}", ")");
-
+        
         public bool IsMatch(params string[] values)
         {
             foreach (var v in values)

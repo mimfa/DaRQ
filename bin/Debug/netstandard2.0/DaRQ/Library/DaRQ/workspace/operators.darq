@@ -1,4 +1,0 @@
-reserve and = "&&";
-reserve or = "||";
-reserve from = ",";
-reserve to = ",";

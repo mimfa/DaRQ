@@ -11,7 +11,7 @@ namespace MiMFa.Compiler.Core
         Info = 0,
         Message = 1,
         Success = 2,
-
+        Subject = 9
     }
 
     public class LogEventArgs : EventArgs

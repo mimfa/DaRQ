@@ -68,9 +68,19 @@ namespace MiMFa.Compiler.JavaScript
                 case "await":
                 case "async":
                 case "new":
+
+                case "implements":
+                case "extends":
+                case "interface":
+                case "class":
+                case "enum":
+                case "package":
+                case "get":
+                case "set":
+                case "function":
                     walker.Move(word.Length);
                     walker.MoveToProcedure();
-                    return new Token(TokenType.Statement, word, location);
+                    return new Token(TokenType.Structure, word, location);
 
                 case "of":
                 case "in":
@@ -78,7 +88,7 @@ namespace MiMFa.Compiler.JavaScript
                 case "instanceof":
                     walker.Move(word.Length);
                     walker.MoveToProcedure();
-                    return new Token(TokenType.Facilitator, word, location);
+                    return new Token(TokenType.Middle, word, location);
 
                 case "super":
                     walker.Move(word.Length);
@@ -95,19 +105,6 @@ namespace MiMFa.Compiler.JavaScript
                 case "protected":
                 case "public":
                 case "static":
-                    walker.Move(word.Length);
-                    walker.MoveToProcedure();
-                    return new Token(TokenType.Access, word, location);
-
-                case "implements":
-                case "extends":
-                case "interface":
-                case "class":
-                case "enum":
-                case "package":
-                case "get":
-                case "set":
-                case "function":
                     walker.Move(word.Length);
                     walker.MoveToProcedure();
                     return new Token(TokenType.Structure, word, location);
@@ -162,7 +159,7 @@ namespace MiMFa.Compiler.JavaScript
             var value = string.Concat(walker.WalkUntil(ch => ch == "/" && walker.Peek(-1) != (this.Compiler?.Options?.Escape ?? "\\")[0].ToString()).ToArray());
             walker.Walk(); // consume closing '/'
             value = "/" + value + "/" + string.Concat(walker.WalkWhile(ch => Regex.IsMatch(ch.ToString(), "[gimsuy]", RegexOptions.IgnoreCase)).ToArray());
-            return new Token(TokenType.RegExPathData, value, location);
+            return new Token(TokenType.PatternData, value, location);
         }
 
         protected virtual Token TokenizeString(CodeWalker walker, Location location)
@@ -182,7 +179,7 @@ namespace MiMFa.Compiler.JavaScript
                 if (ch != null) value += ch;
                 escaped = false;
             }
-            return new Token(quote == "`" ? TokenType.TemplateStringData : TokenType.StringData, value, location);
+            return new Token(quote == "`" && value.Contains("${") ? TokenType.TemplateStringData : TokenType.StringData, value, location);
         }
 
         protected virtual Token TokenizeOperator(CodeWalker walker, Location location)
@@ -193,26 +190,29 @@ namespace MiMFa.Compiler.JavaScript
                 switch (sign)
                 {
                     case "*": case "/": case "**": case "%": case "+": case "-": case "~": case "^": case "=": case "<": case ">": case "<<": case ">>": case ">>>":
-                    case "==": case "!=": case "===": case "!==": case "<=": case ">=": case "!": case "&&": case "||": case "&": case "|": case "??":
+                    case "==": case "!=": case "===": case "!==": case "<=": case ">=": case "&&": case "||": case "&": case "|": case "??":
                     case "+=": case "-=": case "*=": case "/=": case "**=": case "^=": case "%=":
                     case "&&=": case "&=": case "||=": case "|=": case "??=":
-                        return new Token(TokenType.OperatorSymbol, sign, location);
-                    case "++": case "--":
-                        return new Token(TokenType.IdentifierKeyword, sign + TokenizeCode(walker).Value, location);
                     case "=>":
-                        return new Token(TokenType.OperatorSymbol, sign, location);
+                        return new Token(TokenType.Middle | TokenType.Symbol, sign, location);
+                    case "!": case "...":
+                        return new Token(TokenType.Prefix | TokenType.Symbol, sign, location);
+                    case "++": case "--":
+                        return new Token(TokenType.Prefix | TokenType.Suffix | TokenType.Symbol, sign, location);
                     case ".": case "?.": case "!.":
                         return new Token(TokenType.ConcatenatorSymbol, sign, location);
                     case ",":
-                        return new Token(TokenType.SeparatorSymbol, sign, location);
+                        return new Token(TokenType.DelimiterSymbol, sign, location);
                     case ";":
                         return new Token(TokenType.TerminatorSymbol, sign, location);
-                    case "{": case "[": case "(":
-                        return new Token(TokenType.StartScope, sign, location);
-                    case "}": case "]": case ")":
-                        return new Token(TokenType.EndScope, sign, location);
-                    case "...": case ":":
-                        return new Token(TokenType.Symbol, sign, location);
+                    case "{": case "(":
+                        return new Token(TokenType.Start | TokenType.Scope, sign, location);
+                    case "[":
+                        return new Token(TokenType.Start | TokenType.Scope | TokenType.Prefix | TokenType.Suffix | TokenType.Symbol, sign, location);
+                    case "}": case ")":
+                    case "]":
+                        return new Token(TokenType.End | TokenType.Scope, sign, location);
+                    case ":":
                     default:
                         if (sign.Length <= 1)
                             return new Token(TokenType.Symbol, sign, location);

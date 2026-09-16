@@ -1,76 +1,93 @@
+using MiMFa.Compiler.Model;
 using MiMFa.Compiler.Resource;
 using System;
 using System.Collections.Generic;
 
 namespace MiMFa.Compiler.DaRQ
 {
-    public class Compiler : MiMFa.Compiler.Compiler
+    public class Compiler : JavaScript.Compiler
     {
-        public Dictionary<string, string> Libraries { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
         public Dictionary<string, string> ActionCommands { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public Dictionary<string, string> FunctionCommands { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public Dictionary<string, string> DefinitionCommands { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         public Dictionary<string, string> Reserves { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        public Dictionary<string, string> Functions { get; } = new Dictionary<string, string>();
-
-
-        public Compiler(Options options = null) : base(new IStage[] {
-            new Tokenizer(),
-            new Preprocessor(),
-            new Parser(),
-            new Assembler(),
-            new Generator()
-        }, options ?? new Options(), new ResourceProvider())
+        public Compiler(IStage[] stages = null, Options options = null, ResourceProvider resourceProvider = null)
+            : base(stages ?? new IStage[] {
+                    new Tokenizer(),
+                    new Preprocessor(),
+                    new Parser(),
+                    new Assembler(),
+                    new Generator()
+                }, options ?? new Options(), resourceProvider ?? new ResourceProvider())
         {
         }
 
-
-        public string SetFunction(string name)
-        {
-            Functions[name] = name;
-            return name;
-        }
-        public string GetFunction(string name)
-        {
-            Functions.TryGetValue(name, out var v);
-            return v;
-        }
-
-        public string SetActionCommand(string name)
+        public virtual Node SetActionCommand(string name, Node node)
         {
             ActionCommands[name.ToLower()] = name + "()";
-            return name;
+            return SetKeyword(name, node);
         }
-        public string GetActionCommand(string name)
+        public virtual Token GetActionCommand(string name)
+        {
+            ActionCommands.TryGetValue(name.ToLower(), out string v);
+            return GetKeyword(v);
+        }
+        public virtual string GetActionCommandName(string name)
         {
             ActionCommands.TryGetValue(name.ToLower(), out string label);
             return label;
         }
 
-        public string SetFunctionCommand(string name)
+        public virtual Node SetFunctionCommand(string name, Node node)
         {
             FunctionCommands[name.ToLower()] = name;
-            return name;
+            return SetKeyword(name, node);
         }
-        public string GetFunctionCommand(string name)
+        public virtual Token GetFunctionCommand(string name)
+        {
+            FunctionCommands.TryGetValue(name.ToLower(), out string v);
+            return GetKeyword(v);
+        }
+        public virtual string GetFunctionCommandName(string name)
         {
             FunctionCommands.TryGetValue(name.ToLower(), out string v);
             return v;
         }
 
-        public string SetDirectionCommand(string name)
+        public virtual Node SetDefinitionCommand(string name, Node node)
         {
             string key = name.ToLower();
             DefinitionCommands[key] = name;
-            return name;
+            return SetKeyword(name, node);
         }
-        public string GetDirectionCommand(string name)
+        public virtual Token GetDefinitionCommand(string name)
+        {
+            DefinitionCommands.TryGetValue(name.ToLower(), out string v);
+            return GetKeyword(v);
+        }
+        public virtual string GetDefinitionCommandName(string name)
         {
             DefinitionCommands.TryGetValue(name.ToLower(), out string v);
             return v;
         }
+
+        public virtual Token GetCommand(string name)
+        {
+            return GetFunctionCommand(name) ?? GetDefinitionCommand(name) ?? GetActionCommand(name);
+        }
+        public virtual string GetCommandName(string name)
+        {
+            return GetFunctionCommandName(name) ?? GetDefinitionCommandName(name) ?? GetActionCommandName(name);
+        }
+
+        public virtual string GetFunctionName(string name)
+        {
+            if (Keywords.ContainsKey(name) && Keywords[name]?.Is(TokenType.FunctionKeyword) == true)
+                return name;
+            return null;
+        }
+
     }
 }

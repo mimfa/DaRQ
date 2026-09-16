@@ -26,7 +26,42 @@ namespace MiMFa.Compiler.JavaScript
         {
             if (node.Is(NodeType.Block) && node.Token.IsMatch("{")) return GenerateCode(node, walker) ?? "";
             var code = GenerateCode(node, walker) ?? "";
-            return string.IsNullOrEmpty(code)?"": System.Text.RegularExpressions.Regex.IsMatch(code, ";\\s*$")? code:$"{code};";
+            return string.IsNullOrEmpty(code)?"": System.Text.RegularExpressions.Regex.IsMatch(code, "[;\\}]\\s*$")? code:$"{code};";
+        }
+
+
+        protected override string GenerateProgramCode(Node node, NodeWalker walker)
+        {
+            if (Compiler != null) return
+                    Transform(node.Update(type: (NodeType)(node.Type - NodeType.Program)), Compiler) as string +
+                    Compiler?.Options.MakeNewLine(Indention) +
+                    Compiler?.Options.MakeNewLine(Indention);
+            return null;
+        }
+
+        protected override string GenerateSectionCode(Node node, NodeWalker walker)
+        {
+            if (Compiler != null) return 
+                    GenerateCode(node.Update(type: (NodeType)(node.Type - NodeType.Section)), walker) as string +
+                    Compiler?.Options.MakeNewLine(Indention);
+            return null;
+        }
+
+        protected override string GenerateComputeCode(Node node, NodeWalker walker)
+        {
+            return " " + node.Token.Value + " " + (GenerateArrayCode(node.Children));
+        }
+
+        protected override string GenerateProcedureCode(Node node, NodeWalker walker)
+        {
+            return node.Token.Value + " " + (GenerateArrayCode(node.Children));
+        }
+
+        protected override string GeneratePlainCode(Node node, NodeWalker walker)
+        {
+            if (node.Count > 0)
+                return $"{node.Token.Value}{GenerateArrayCode(node.Children, "")}";
+            return node.ToString();
         }
 
         protected override string GenerateRuleCode(Node node, NodeWalker walker)
@@ -39,8 +74,8 @@ namespace MiMFa.Compiler.JavaScript
                     if (node.Count > 2) res += Compiler?.Options.MakeNewLine(Indention) + "else " + GenerateCodeLine(node.ForceLast, walker);
                     return res;
                 }
-                else if (node.Is(NodeType.ShortSelector) && node.Count>2)
-                    return $"({GenerateCode(node.ForceFirst, walker)}? {GenerateCode(node.ForceChild(1), walker)} : {GenerateCode(node.ForceChild(2), walker)})";
+                else if (node.Is(NodeType.ShortSelector) && node.Count > 2)
+                    return $"{GenerateCode(node.ForceFirst, walker)}? {GenerateCode(node.ForceChild(1), walker)} : {GenerateCode(node.ForceChild(2), walker)}";
                 else if (node.Is(NodeType.LongSelector))
                 {
                     var parts = node.ForceLast.Children.Select(n =>
@@ -48,7 +83,7 @@ namespace MiMFa.Compiler.JavaScript
                         Indention++;
                         string c;
                         if (n.Token.IsMatch("case"))
-                            c = Compiler?.Options.MakeNewLine(Indention) + $"case {GenerateCode(n.ForceFirst, walker)}:" + (n.Count > 1 ? Compiler?.Options.MakeNewLine(Indention + 1) : "") +  GenerateArrayCode(n.Children.Skip(1), Compiler?.Options.MakeNewLine(Indention + 1) ?? "\n");
+                            c = Compiler?.Options.MakeNewLine(Indention) + $"case {GenerateCode(n.ForceFirst, walker)}:" + (n.Count > 1 ? Compiler?.Options.MakeNewLine(Indention + 1) : "") + GenerateArrayCode(n.Children.Skip(1), Compiler?.Options.MakeNewLine(Indention + 1) ?? "\n");
                         else
                             c = Compiler?.Options.MakeNewLine(Indention) + "default:" + (n.Count > 0 ? Compiler?.Options.MakeNewLine(Indention + 1) : "") + GenerateArrayCode(n.Children, Compiler?.Options.MakeNewLine(Indention + 1) ?? "\n");
                         Indention--;
@@ -72,61 +107,13 @@ namespace MiMFa.Compiler.JavaScript
             return string.Empty;
         }
 
-        protected override string GenerateProcedureCode(Node node, NodeWalker walker)
-        {
-            return node.Token.Value + " " + (GenerateArrayCode(node.Children));
-        }
-
-        protected override string GenerateComputeCode(Node node, NodeWalker walker)
-        {
-            return " " + node.Token.Value + " " + (GenerateArrayCode(node.Children));
-        }
-
-        protected override string GeneratePlainCode(Node node, NodeWalker walker)
-        {
-            if (node.Count > 0)
-                return $"{node.Token.Value}{GenerateArrayCode(node.Children, "")}";
-            return node.ToString();
-        }
-
         protected override string GenerateDefineCode(Node node, NodeWalker walker)
         {
-            // function declarations and arrow functions
             if (node.Token.Is(TokenType.FunctionKeyword))
-            {
-                if (!string.IsNullOrEmpty(node.Token.Value))
-                    return $"function {node.Token.Value}({GenerateArrayCode(node.First?.Children ?? new Node[0],", ")}) {GenerateArrayCode(node.Children.Skip(1),"")}{Compiler?.Options.MakeNewLine(Indention)}";
-                else
-                    return $"({GenerateArrayCode(node.First?.Children ?? new Node[0],", ")}) => {GenerateArrayCode(node.Children.Skip(1),"")}";
-            }
-
-            // arrow operator node
-            if (node.Token.IsMatch("=>") || node.Token.Value == "=>")
-            {
-                var left = node.First != null ? GenerateCode(node.First, walker) : "";
-                var right = GenerateArrayCode(node.Children,"");
-                return left + " => " + right;
-            }
-
-            // class declaration
-            if (node.Token.IsMatch("class") || node.Token.Value == "class")
-            {
-                string name = node.Children != null && node.Children.Count > 0 ? node.Children[0].Token?.Value ?? "" : "";
-                string extendsPart = "";
-                for (int i = 0; node.Children != null && i < node.Children.Count; i++)
-                {
-                    var c = node.Children[i];
-                    if (c.Token != null && c.Token.IsMatch("extends") && i + 1 < node.Children.Count)
-                    {
-                        extendsPart = " extends " + GenerateCode(node.Children[i + 1], walker);
-                        break;
-                    }
-                }
-                var body = node.Children != null && node.Children.Count > 0 ? GenerateArray(node.Children).LastOrDefault() ?? "{}" : "{}";
-                return $"class {name}{extendsPart} {body}";
-            }
-
-            if(string.IsNullOrEmpty(node.Token.Value)) return $"{GenerateArrayCode(node.Children ?? new Node[0])}";
+                return $"function {node.Token.Value}({GenerateArrayCode(node.First?.Children ?? new Node[0],", ")}) {GenerateArrayCode(node.Children.Skip(1),"")}{Compiler?.Options.MakeNewLine(Indention)}";
+            if (node.Token.Is(TokenType.Structure) && node.LastLeaf.Token.Is(TokenType.Symbol, TokenType.End | TokenType.Scope) && (node.Parent == null || node.Parent.IsIndependent()))
+                return $"{Compiler?.Options.MakeNewLine(Indention)}{node.Token.Value} {GenerateArrayCode(node.Children ?? new Node[0])}";
+            if (string.IsNullOrEmpty(node.Token.Value)) return $"{GenerateArrayCode(node.Children ?? new Node[0])}";
             else return $"{node.Token.Value} {GenerateArrayCode(node.Children ?? new Node[0])}";
         }
 
@@ -134,18 +121,8 @@ namespace MiMFa.Compiler.JavaScript
         {
             if (node.Token.Is(TokenType.FunctionKeyword))
                 return $"{node.Token.Value}({GenerateArrayCode(node.Children,", ")})";
-            if (node.Count > 0)
-            {
-                // optional chaining handling
-                if (node.Token.Is(TokenType.NamespaceKeyword))
-                    return $"{node.Token.Value}{GenerateArrayCode(node.Children,"")}";
-
-                // spread handling in calls
-                if (node.Token.IsMatch("..."))
-                    return $"...{GenerateArrayCode(node.Children, ", ")}";
-
-                return $"{node.Token.Value} {GenerateArrayCode(node.Children)}";
-            }
+            if (node.Token.Is(TokenType.NamespaceKeyword)) return $"{node.Token.Value}{GenerateArrayCode(node.Children, "")}";
+            if (node.Count > 0) return $"{node.Token.Value} {GenerateArrayCode(node.Children)}";
             else return node.ToString();
         }
 
@@ -154,9 +131,9 @@ namespace MiMFa.Compiler.JavaScript
             if (node.Token.Is(TokenType.ObjectData))
             {
                 Indention++;
-                var inner = GenerateArrayCode(node.Children, Compiler?.Options.MakeNewLine(Indention) ?? "\n");
+                var inner = GenerateArrayCode(node.Children, Compiler?.Options.MakeNewLine(Indention) ?? "");
                 Indention--;
-                return $"{{{Compiler?.Options.MakeNewLine(++Indention)}" + inner + $"{Compiler?.Options.MakeNewLine(--Indention)}}}";
+                return $"{{{Compiler?.Options.MakeNewLine(++Indention)}" + inner.Trim() + $"{Compiler?.Options.MakeNewLine(--Indention)}}}";
             }
             if (node.Token.Is(TokenType.ArrayData))
             {
@@ -170,9 +147,9 @@ namespace MiMFa.Compiler.JavaScript
                 if (node.Token.IsMatch("{"))
                 {
                     Indention++;
-                    var body = GenerateArrayCode(node.Children, Compiler?.Options.MakeNewLine(Indention) ?? "\n");
+                    var body = GenerateArrayCode(node.Children, Compiler?.Options.MakeNewLine(Indention) ?? "");
                     Indention--;
-                    return $"{{{Compiler?.Options.MakeNewLine(Indention + 1)}" + body + $"{Compiler?.Options.MakeNewLine(Indention)}}}";
+                    return $"{{{Compiler?.Options.MakeNewLine(Indention + 1)}" + body.Trim() + $"{Compiler?.Options.MakeNewLine(Indention)}}}";
                 }
                 else if (node.Token.IsMatch("["))
                 {
@@ -189,7 +166,7 @@ namespace MiMFa.Compiler.JavaScript
                     return $"({parameters})";
                 }
             }
-            return GenerateArrayCode(node.Children, Compiler?.Options.MakeNewLine(Indention));
+            return GenerateArrayCode(node.Children, Compiler?.Options.MakeNewLine(Indention)).TrimEnd();
         }
 
         protected override string GenerateHelperCode(Node node, NodeWalker walker)
@@ -199,15 +176,9 @@ namespace MiMFa.Compiler.JavaScript
             else return System.Text.RegularExpressions.Regex.Replace(node.ToString(),"\\s*\\r*\\n+\\r*\\s*$", Compiler?.Options.MakeNewLine(Indention)??"\n");
         }
 
-        protected override string GenerateProgramCode(Node node, NodeWalker walker)
-        {
-            if (Compiler != null) return Transform(node, Compiler) as string;
-            return null;
-        }
-
         protected override string GenerateUnknownCode(Node node, NodeWalker walker)
         {
-            return node.Token.Value;
+            return node.ToString();
         }
     }
 }

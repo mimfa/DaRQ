@@ -10,7 +10,10 @@ namespace MiMFa.Compiler.DaRQ
     {
         public new Compiler Compiler { get; set; }
 
-        public string[] EqualsSign = new string[] { "=", "=>", "->" };
+        public int BreakParentSwitch { get; set; } = 0;
+        public int BreakCollectSwitch { get; set; } = 0;
+
+        public string[] EqualsSign = new string[] { "=", "=>", "->", ":" };
 
 
         public override bool Initialize(MiMFa.Compiler.Compiler compiler)
@@ -19,80 +22,131 @@ namespace MiMFa.Compiler.DaRQ
             return true;
         }
 
-        public int TargetLocation { get; set; } = 0;
-
         public override IEnumerable<Node> Parse(TokenWalker walker, MiMFa.Compiler.Compiler compiler = null)
         {
-            if (!Initialize(compiler)) yield break;
-            TargetLocation = -1;
-            Locality = 0;
-            while (!walker.IsEnded)
-                yield return ParseTokenSequence(walker);
+            BreakParentSwitch = BreakCollectSwitch = 0;
+            return base.Parse(walker, compiler);
         }
 
-        protected override Node ParseToken(TokenWalker walker)
+        protected virtual Node QueryParseToken(TokenWalker walker)
         {
-            if (TargetLocation >= 0 && Locality > TargetLocation++)
-                return new Node();
-            else TargetLocation = -1;
-            return base.ParseToken(walker);
+            return CreateLineNode(BlockParseToken(walker));
         }
 
-        protected virtual Node ParseTokenSequence(TokenWalker walker)
+        protected override Node BlockParseToken(TokenWalker walker)
         {
-            Locality++;
-            var nodes = ParseTokenSequences(walker).ToList();
-            Locality--;
-            if (nodes.Count > 1) return new Node(null, NodeType.Plain, nodes.ToArray());
-            if (nodes.Count == 1) return nodes[0];
-            return new Node();
+            return base.BlockParseToken(TrimSeparators(walker));
         }
-        protected virtual IEnumerable<Node> ParseTokenSequences(TokenWalker walker)
+        protected override IEnumerable<Node> BlockParseTokens(TokenWalker walker)
         {
-            yield return base.ParseToken(walker);
-            if (walker.Current != null)
+            var en = base.SequenceParseTokens(walker).GetEnumerator();
+            do
             {
-                var next = walker.PeekProcedure();
-                if (next != null && next.Is(TokenType.Structure | TokenType.Keyword))
-                    foreach (var node in ParseTokenSequences(walker))
-                        yield return node;
+                if (BreakParentSwitch > 0)
+                {
+                    BreakParentSwitch--;
+                    break;
+                }
+                if (en.MoveNext()) yield return en.Current;
+                else if (walker.Current != null)
+                {
+                    var next = walker.PeekProcedure();
+                    if (next != null && !IsFlag(next))
+                        if (IsComplementors(next))
+                            foreach (var node in BlockParseTokens(walker))
+                                yield return node;
+                        else if (next.Is(TokenType.Symbol))
+                            foreach (var node in BlockParseTokens(walker))
+                                yield return node;
+                    break;
+                }
+                else break;
             }
+            while (true);
         }
 
-        protected virtual Node SeparatedParseToken(TokenWalker walker)
+        protected override Node SequenceParseToken(TokenWalker walker)
         {
-            Locality++;
-            var tokens = SeparatedParseTokens(walker).ToList();
-            Locality--;
-            if (tokens.Count > 1) return new Node(null, NodeType.Plain, tokens.ToArray());
-            if (tokens.Count == 1) return tokens[0];
-            return new Node();
+            return TrimSeparators(base.SequenceParseToken(TrimSeparators(walker)));
         }
-        protected virtual IEnumerable<Node> SeparatedParseTokens(TokenWalker walker)
+        protected override IEnumerable<Node> SequenceParseTokens(TokenWalker walker)
         {
-            foreach (var node in BasicParseTokens(walker)) yield return node;
-            if (walker.Current != null)
+            var en = base.CompactParseTokens(walker).GetEnumerator();
+            do
             {
-                var next = walker.PeekProcedure();
-                if (next != null && (next.Is(TokenType.Structure | TokenType.Keyword) || next.Is(TokenType.OperatorSymbol, TokenType.Facilitator) || next.IsMatch("[")))
-                    foreach (var node in SeparatedParseTokens(walker)) yield return node;
-                yield break;
+                if (BreakCollectSwitch > 0)
+                {
+                    BreakCollectSwitch--;
+                    break;
+                }
+                if (BreakParentSwitch > 0)
+                    break;
+                if (en.MoveNext()) yield return en.Current;
+                else if (walker.Current != null)
+                {
+                    var next = walker.PeekProcedure();
+                    var next2 = walker.PeekProcedure(1);
+                    if (next != null && !IsFinalizers(next) && !IsFlag(next))
+                    {
+                        if (IsMediators(next) || IsComplementors(next))
+                            foreach (var node in SequenceParseTokens(walker))
+                                yield return node;
+                        else if (
+                            IsDelimiters(next) &&
+                            !IsComplementors(next2) &&
+                            !IsFinalizers(next2) &&
+                            !IsOrganizers(next2))
+                            foreach (var node in SequenceParseTokens(walker))
+                                yield return node;
+                    }
+                    break;
+                }
+                else break;
             }
+            while (true);
         }
 
-        protected virtual Node ParseTokenLine(TokenWalker walker)
+        protected override Node CompactParseToken(TokenWalker walker)
         {
-            return CreateLineNode(ParseTokenSequence(walker));
+            return TrimSeparators(base.CompactParseToken(TrimSeparators(walker)));
         }
-        protected virtual Node ParseTokenBlock(TokenWalker walker)
+        protected override IEnumerable<Node> CompactParseTokens(TokenWalker walker)
         {
-            var node = ParseTokenSequence(walker);
-            if (!node.Is(NodeType.Block)) return CreateBlockNode(node);
-            return node;
+            var en = base.ParseTokens(walker).GetEnumerator();
+            do
+            {
+                if (BreakCollectSwitch > 0)
+                    break;
+                if (BreakParentSwitch > 0)
+                    break;
+                if (en.MoveNext()) yield return en.Current;
+                else if (walker.Current != null)
+                {
+                    var next = walker.PeekProcedure();
+                    if (next != null && !IsSeparators(next) && !IsFinalizers(next) && !IsFlag(next))
+                        if (IsConnectors(next) || IsMediators(next) || IsComplementors(next))
+                            yield return CompactParseToken(walker);
+                        else if (
+                            en.Current != null &&
+                            en.Current.Token.Is(TokenType.Keyword) &&
+                            !en.Current.Is(NodeType.Define) &&
+                            next.Is(TokenType.Keyword) &&
+                            !IsSeparators(en.Current.LastLeaf.Token) &&
+                            !IsOrganizers(next)
+                        )
+                        {
+                            yield return CreateNode(".");
+                            yield return CompactParseToken(walker);
+                        }
+                    break;
+                }
+                else break;
+            }
+            while (true);
         }
 
-
-        protected override IEnumerable<Node> ParseStatementToken(Token token, TokenWalker walker)
+        
+        protected override IEnumerable<Node> ParseStructureToken(Token token, TokenWalker walker)
         {
             var before = walker.PeekProcedure(-2);
             var next = walker.PeekProcedure();
@@ -102,20 +156,22 @@ namespace MiMFa.Compiler.DaRQ
             {
                 case "#":
                     var name = walker.Walk().Value;
-                    if (next2?.Is(TokenType.SeparatorSymbol, TokenType.TerminatorSymbol) == true || next2?.IsMatch(EqualsSign) == true) walker.Remove(next2);
-                    try { Compiler?.SetActionCommand(name); } catch { }
-                    yield return CreateLineNode(
-                        CreateCallNode(
-                            CreatePackNode(
-                                CreateDefineIdentifierNode(name, 
-                                    CreateCallableNode(
-                                        ParseTokenSequence(walker)
-                                    ), null
+                    if (IsDelimiters(next2) || next2?.IsMatch(EqualsSign) == true) walker.Remove(next2);
+
+                    yield return Compiler?.SetActionCommand(name,
+                         CreateLineNode(CreateCallNode(
+                                CreatePackNode(
+                                    CreateDefineIdentifierNode(name, 
+                                        CreateCallableNode(
+                                            QueryParseToken(walker)
+                                        ), null
+                                    )
                                 )
-                            )
-                       )
+                           )
+                        ).Update(type: NodeType.Plain | NodeType.Section)
                     );
                     yield break;
+
                 case "command":
                     if (next?.IsMatch("(") == true)
                     {
@@ -126,188 +182,234 @@ namespace MiMFa.Compiler.DaRQ
                     next = walker.PeekProcedure();
                     if (next?.IsMatch("(") == true)
                     {
-                        Compiler?.SetFunctionCommand(cname.Value);
-                        yield return new Node(cname.Clone(TokenType.FunctionKeyword, null, null), NodeType.Define,
-                            ParseTokenSequence(walker).TrimSeparators(),
-                            ParseTokenBlock(walker)
-                        );
+                        yield return Compiler?.SetFunctionCommand(cname.Value, new Node(cname.Clone(TokenType.FunctionKeyword, null, null), NodeType.Define | NodeType.Section,
+                            SingleParseToken(walker),
+                            CreateBlockNode(BlockParseToken(walker))
+                        ));
                     }
                     else
                     {
-                        Compiler?.SetDirectionCommand(cname.Value);
-                        if (next.Is(TokenType.OperatorSymbol))
+                        if (next.Is(TokenType.Middle | TokenType.Symbol))
                             walker.Walk();
-                        yield return CreateNode("var", NodeType.Define, TokenType.Statement,
-                            new Node(cname.Clone(TokenType.IdentifierKeyword, null, null), NodeType.Call),
-                            CreateNode("="),
-                            ParseTokenLine(walker)
+                        yield return Compiler?.SetDefinitionCommand(cname.Value, CreateNode("var", NodeType.Define | NodeType.Section, TokenType.Structure,
+                                new Node(cname.Clone(TokenType.IdentifierKeyword, null, null), NodeType.Call),
+                                CreateNode("="),
+                                QueryParseToken(walker)
+                            )
                         );
                     }
                     yield break;
 
-                case "if":
-                    if (next?.IsMatch("(") == true) break;
-                    var cond = SeparatedParseToken(walker).TrimSeparators();
-                    var onTrue = ParseTokenLine(FitWalker(walker));
-                    var onFalse = (walker.PeekProcedure()?.IsMatch("else") == true) ? ParseTokenLine(walker.MoveToProcedure()) : null;
-                    bool isnormal = before == null ||
-                        onTrue.Token.IsMatch("{") ||
-                        onFalse.Token.IsMatch("{") ||
-                        before.IsMatch("{", "do", "end", "else") ||
-                        before.Is(TokenType.TerminatorSymbol, TokenType.EndScope);
-                    yield return new Node(
-                        token,
-                        isnormal ? NodeType.NormalSelector : NodeType.ShortSelector,
-                        cond, isnormal ? CreateLineNode(onTrue) : onTrue.TrimSeparators(), isnormal ? CreateLineNode(onFalse) : onFalse.TrimSeparators()
-                    );
-                    yield break;
-
-                case "for":
-                case "each":
-                case "foreach":
-                    token.Value = "for";
-                    if (next?.IsMatch("each") == true)
-                    {
-                        walker.Remove(next);
-                        if (next2?.IsMatch("(") == true) break;
-                    }
-                    else if (next?.IsMatch("(") == true) break;
-
-                    if (walker.PeekProcedure(1)?.IsMatch("of", "in") == true || walker.PeekProcedure(2)?.IsMatch("of", "in") == true)
-                        yield return new Node(token, NodeType.CollectionIterator,
-                            SeparatedParseToken(walker).TrimSeparators(),
-                            ParseTokenLine(FitWalker(walker))
-                        );
-                    else yield return new Node(token, NodeType.ComputationIterator,
-                        new Node(null, NodeType.Plain,
-                        CreateNode("", SeparatedParseToken(walker).TrimSeparators(), CreateNode(";", TokenType.TerminatorSymbol)),
-                        CreateNode("", SeparatedParseToken(FitWalker(walker)).TrimSeparators(), CreateNode(";", TokenType.TerminatorSymbol)),
-                        SeparatedParseToken(FitWalker(walker)).TrimSeparators()),
-                        ParseTokenLine(FitWalker(walker))
-                    );
-                    yield break;
-
-                case "while":
-                    if (next?.IsMatch("(") == true) break;
-                    yield return new Node(token, NodeType.ConditionIterator, 
-                        new Node(null, NodeType.Plain, ParseTokenSequence(walker).TrimSeparators()),
-                        ParseTokenLine(walker)
-                    );
-                    yield break;
-
-                case "try":
-                    if (next?.IsMatch("to", "from") == true || next?.Is(TokenType.SeparatorSymbol) == true) walker.Walk();
-                    else if (next?.IsMatch("{") == true) yield return CreateProceduresNode(token.Value, ParseTokenBlock(walker));
-                    else
-                    {
-                        var children = new List<Node>();
-                        while (walker.Current != null && !walker.Current.IsMatch("catch", "finally"))
-                        {
-                            var n = ParseTokenLine(walker);
-                            if (!n.Is(NodeType.None)) children.Add(n);
-                        }
-                        yield return CreateProceduresNode(token.Value, CreateBlockNode(children.ToArray()));
-                    }
-                    yield break;
-
-                case "finally":
-                    yield return CreateProceduresNode(token.Value, ParseTokenBlock(walker));
-                    break;
-
-                case "catch":
-                    yield return CreateProceduresNode(token.Value,
-                        next?.Is(TokenType.Keyword) == true && next2?.Is(TokenType.SeparatorSymbol) == true
-                            ? (next.IsMatch("(") ? new[] { ParseTokenSequence(walker).TrimSeparators() } : new[] { CreatePackNode(ParseTokenSingle(walker).TrimSeparators()) }).Concat(new[] { ParseTokenBlock(walker.MoveToProcedure()) }).ToArray()
-                            : new[] { ParseTokenBlock(walker) }
-                    );
-                    yield break;
-
-                case "return":
-                case "yield":
-                    yield return new Node(new Token(TokenType.Keyword, token.Value), NodeType.Procedure, ParseTokenLine(walker));
-                    yield break;
-            }
-            foreach(var node in base.ParseStatementToken(token, walker))
-                yield return node;
-        }
-        protected override IEnumerable<Node> ParseStructureToken(Token token, TokenWalker walker)
-        {
-            var before = walker.PeekProcedure(-2);
-            var next = walker.PeekProcedure();
-            var next2 = walker.PeekProcedure(1);
-            string dot = before == null || before.Value != "." ? "." : null;
-            switch (token.Value.ToLower())
-            {
-                case "function":
-                    if (next?.IsMatch("(") == true) break;
-                    next = walker.Walk();
-                    Compiler?.SetFunction(next.Value);
-                    yield return new Node(next.Clone(TokenType.FunctionKeyword, null, null), NodeType.Define,
-                        ParseTokenSequence(walker).TrimSeparators(),
-                        ParseTokenBlock(walker)
-                    );
+                case "implements":
+                case "extends":
+                    if (IsDelimiters(next)) walker.Walk();
+                    yield return new Node(token, NodeType.Define, new Node(walker.Walk(), NodeType.Plain), SingleParseToken(walker));
                     yield break;
 
                 case "do":
+                case "begin":
                 case "doing":
                     if (token.IsMatch("do") && next?.IsMatch("{") == true) break;
-                    if (next?.Is(TokenType.SeparatorSymbol) == true) walker.Walk();
+                    if (IsDelimiters(next)) walker.Walk();
+
                     Locality++;
                     var doChildren = new List<Node>();
-                    while (walker.Current != null && !walker.Current.IsMatch("end"))
+                    while (walker.IsRunning && !walker.Current.IsMatch("end"))
                     {
-                        var n = ParseTokenLine(walker);
+                        var n = QueryParseToken(walker);
                         if (!n.Is(NodeType.None)) doChildren.Add(n);
                     }
-                    walker.Walk();
+                    if(walker.IsRunning && walker.Current.IsMatch("end")) walker.Walk();
                     Locality--;
-                    if (walker.Is(TokenType.TerminatorSymbol, TokenType.SeparatorSymbol))
+                    if (IsSeparators(walker.Current))
+                    {
+                        BreakCollectSwitch++;
                         walker.Walk();
+                    }
                     if (token.IsMatch("doing"))
                         yield return CreateCallableNode(CreateBlockNode(doChildren.ToArray()));
                     else yield return CreateBlockNode(doChildren.ToArray());
                     yield break;
 
-                case "promise":
+                case "if":
+                    if (next?.IsMatch("(") == true) break;
+                    if (IsDelimiters(next)) walker.Walk();
+
+                    var cond = CompactParseToken(walker);
+                    var onTrue = QueryParseToken(walker);
+                    var onFalse = (TrimSeparators(walker).PeekProcedure()?.IsMatch("else") == true) ? QueryParseToken(walker.MoveToProcedure()) : null;
+                    bool isnormal = onFalse == null || (
+                        IsGlobalNeeder(onTrue) ||
+                        IsGlobalNeeder(onFalse) ||
+                        before == null ||
+                        before.IsMatch("{", "do", "begin", "end", "else") ||
+                        before.Is(TokenType.TerminatorSymbol, TokenType.End | TokenType.Scope)
+                    );
+                    if(isnormal) yield return new Node(
+                        token,
+                        NodeType.NormalSelector,
+                        cond, CreateLineNode(onTrue), CreateLineNode(onFalse)
+                    ); 
+                    else yield return CreatePackNode(new Node(
+                        token,
+                        NodeType.ShortSelector,
+                        cond, TrimSeparators(onTrue), TrimSeparators(onFalse)
+                    ));
+                    yield break;
+
+                case "for":
+                    if (next?.IsMatch("(") == true) break;
+                    if (IsDelimiters(next)) walker.Walk();
+                    if (walker.PeekProcedure(1)?.IsMatch("of", "in") == true || walker.PeekProcedure(2)?.IsMatch("of", "in") == true)
+                        yield return new Node(token, NodeType.CollectionIterator,
+                            CompactParseToken(walker),
+                            QueryParseToken(walker)
+                        );
+                    else yield return new Node(token, NodeType.ComputationIterator,
+                        new Node(null, NodeType.Plain,
+                        CreateNode("", TrimSeparators(QueryParseToken(walker)), CreateNode(";", TokenType.TerminatorSymbol)),
+                        CreateNode("", TrimSeparators(QueryParseToken(walker)), CreateNode(";", TokenType.TerminatorSymbol)),
+                        TrimSeparators(QueryParseToken(walker))),
+                        QueryParseToken(walker)
+                    );
+                    yield break;
+
+                case "while":
+                    if (next?.IsMatch("(") == true) break;
+                    if (IsDelimiters(next)) walker.Walk();
+
+                    yield return new Node(token, NodeType.ConditionIterator, 
+                        new Node(null, NodeType.Plain, CompactParseToken(walker)),
+                        QueryParseToken(walker)
+                    );
+                    yield break;
+
+                case "try":
+                    if (next?.IsMatch("(") == true) break;
+                    if (IsDelimiters(next)) walker.Walk();
+
+                    var children = new List<Node>();
+                    while (walker.Current != null && !walker.Current.IsMatch("catch", "finally"))
+                    {
+                        var n = QueryParseToken(walker);
+                        if (!n.Is(NodeType.None)) children.Add(n);
+                    }
+                    yield return CreateProceduresNode(token.Value, CreateBlockNode(children.ToArray()));
+                    yield break;
+                case "catch":
+                    if (IsDelimiters(next)) walker.Walk();
+
+                    yield return CreateProceduresNode(token.Value,
+                        next?.Is(TokenType.Keyword) == true && IsDelimiters(next2)
+                            ? new[] {
+                                TrimSeparators(CreatePackNode(CompactParseToken(walker))),
+                                CreateBlockNode(BlockParseToken(walker.MoveToProcedure())),
+                                walker.PeekProcedure()?.IsMatch("finally", "catch") == true ? SingleParseToken(walker) : null
+                            } :
+                            (next.IsMatch("(") ? new[] {
+                                SingleParseToken(walker),
+                                CreateBlockNode(BlockParseToken(walker)),
+                                walker.PeekProcedure()?.IsMatch("finally", "catch") == true ? SingleParseToken(walker) : null
+                            } : new[] {
+                                CreateBlockNode(BlockParseToken(walker)),
+                                walker.PeekProcedure()?.IsMatch("finally", "catch") == true ? SingleParseToken(walker) : null}
+                            )
+                    );
+                    yield break;
+                case "finally":
+                    if (next?.IsMatch("(") == true) break;
+                    if (IsDelimiters(next)) walker.Walk();
+
+                    yield return CreateProceduresNode(token.Value, CreateBlockNode(BlockParseToken(walker)), walker.PeekProcedure()?.IsMatch("finally", "catch") == true ? SingleParseToken(walker) : null);
+                    yield break;
+            }
+            
+            foreach(var node in base.ParseStructureToken(token, walker))
+                yield return node;
+        }
+        protected override IEnumerable<Node> ParseStartToken(Token token, TokenWalker walker)
+        {
+            var next = walker.PeekProcedure();
+            var next2 = walker.PeekProcedure(1);
+            switch (token.Value.ToLower())
+            {
+                case "will":
+                    token.Update(TokenType.FunctionKeyword, "new Promise");
+                    if (next == null) yield return new Node();
+                    else if (next.IsMatch("("))
+                        yield return new Node(token, NodeType.Call, SingleParseToken(walker));
+                    else if (next.Is(TokenType.Keyword) && (IsDelimiters(next2) || IsComplementors(next2) || IsOrganizers(next2)))
+                        yield return new Node(token, NodeType.Call, CompactParseToken(walker));
+                    else
+                    {
+                        var child = CompactParseToken(walker);
+                        if (child != null)
+                            if (child.Is(NodeType.Block)) child = CreateCallableNode(child);
+                            else if (!child.Is(NodeType.Call) || child.Count > 0) child = CreateCallableNode(child);
+                            else child = TrimSeparators(child);
+                        yield return new Node(token, NodeType.Call, child);
+                    }
+                    yield break;
+            }
+            foreach (var node in base.ParseStartToken(token, walker))
+                yield return node;
+        }
+        protected override IEnumerable<Node> ParseMiddleToken(Token token, TokenWalker walker)
+        {
+            switch (token.Value.ToLower())
+            {
+                case "as":
+                    var alias = walker.PeekProcedure();
+                    if (alias != null)
+                    {
+                        var aliasValue = alias.Value;
+                        walker.Walk();
+                        var value = CompactParseToken(walker);
+                        yield return CreateNode(aliasValue, NodeType.Compute, TokenType.ObjectData, value);
+                    }
+                    yield return CreateNode("", NodeType.Compute, TokenType.ObjectData);
+                    yield break;
+            }
+
+            foreach (var node in base.ParseMiddleToken(token, walker))
+                yield return node;
+        }
+        protected override IEnumerable<Node> ParseSuffixToken(Token token, TokenWalker walker)
+        {
+            var before = walker.PeekProcedure(-2);
+            var next = walker.PeekProcedure();
+            var next2 = walker.PeekProcedure(1);
+            string dot = before == null || before.Value != "." ? "." : null;
+
+            switch (token.Value.ToLower())
+            {
                 case "then":
                 case "otherwise":
                 case "anyway":
-                    if (next?.IsMatch("to", "from") == true || next?.Is(TokenType.SeparatorSymbol) == true) walker.Walk();
-                    var isInit = token.IsMatch("promise");
-                    token.Update(TokenType.FunctionKeyword, isInit ? "new Promise" : token.IsMatch("otherwise") ? $"{dot}catch" : token.IsMatch("anyway") ? $"{dot}finally" : $"{dot}then");
+                    token.Update(TokenType.FunctionKeyword, token.IsMatch("otherwise") ? $"{dot}catch" : token.IsMatch("anyway") ? $"{dot}finally" : $"{dot}then");
                     if (next == null) yield return new Node();
-                    else if (next.IsMatch("(") || (next.Is(TokenType.Keyword) && next2?.Is(TokenType.SeparatorSymbol, TokenType.TerminatorSymbol) == true))
-                        yield return new Node(token, NodeType.Call, ParseToken(walker).TrimSeparators());
-
-                    var child = ParseToken(walker);
-                    if (child != null)
+                    else if (next.IsMatch("("))
+                        yield return new Node(token, NodeType.Call, SingleParseToken(walker));
+                    else if (next.Is(TokenType.Keyword) && (IsSeparators(next2) || IsComplementors(next2) || IsFinalizers(next2) || IsOrganizers(next2)))
+                        yield return new Node(token, NodeType.Call, CompactParseToken(walker));
+                    else
                     {
-                        if (child.Is(NodeType.Block))
-                        {
-                            if (isInit) child = CreateCallableNode(child);
-                            else child = CreateCallableNode(child.Insert(0, CreateNode("WORKSPACE(data);")), CreateNode("data", NodeType.Plain, TokenType.Keyword));
-                        }
-                        else if (!child.Is(NodeType.Call) || child.Count > 0)
-                        {
-                            if (isInit) child = CreateCallableNode(child);
-                            else child = CreateCallableNode(CreateBlockNode(CreateNode("WORKSPACE(data);"), CreateLineNode(child)), CreateNode("data", NodeType.Plain, TokenType.Keyword));
-                        }
-                        else child = child.TrimSeparators();
+                        var child = CompactParseToken(walker);
+                        if (child != null)
+                            if (child.Is(NodeType.Block))
+                                child = CreateCallableNode(CreateLineNode(child.Insert(0, CreateNode("handlers(data);"))), CreateNode("data", NodeType.Plain, TokenType.Keyword));
+                            else if (!child.Is(NodeType.Call) || child.Count > 0)
+                                child = CreateCallableNode(CreateBlockNode(CreateNode("handlers(data);"), CreateLineNode(child)), CreateNode("data", NodeType.Plain, TokenType.Keyword));
+                            else child = TrimSeparators(child);
+                        yield return new Node(token, NodeType.Call, child);
                     }
-                    yield return new Node(token, NodeType.Call, child);
                     yield break;
 
                 case "where":
                     token.Update(TokenType.FunctionKeyword, "filter");
                     yield return new Node(token, NodeType.Call, 
-                        CreateCallableNode(ParseTokenSequence(walker).TrimSeparators(), CreateNode("data"))
+                        CreateCallableNode(CompactParseToken(walker), CreateNode("data"))
                     );
-                    yield break;
-
-                case "select":
-                case "collect":
-                    token.Update(TokenType.FunctionKeyword, token.Value.ToUpper());
-                    yield return new Node(token, NodeType.Call, ParseToken(walker).TrimSeparators());
                     yield break;
 
                 case "distinct":
@@ -317,29 +419,17 @@ namespace MiMFa.Compiler.DaRQ
                     );
                     yield break;
 
-                case "as":
-                    var alias = walker.PeekProcedure();
-                    if (alias != null)
-                    {
-                        var aliasValue = alias.Value;
-                        walker.Walk();
-                        var value = ParseToken(walker).TrimSeparators();
-                        yield return CreateNode(aliasValue, NodeType.Compute, TokenType.ObjectData, value);
-                    }
-                    yield return CreateNode("", NodeType.Compute, TokenType.ObjectData);
-                    yield break;
-
                 case "limit":
-                    if (next?.IsMatch("by", "to") == true) walker.Walk();
+                    if (IsDelimiters(next)) walker.Walk();
                     token.Update(TokenType.FunctionKeyword, "slice");
-                    var nlimit = ParseToken(walker);
+                    var nlimit = SequenceParseToken(walker);
                     yield return new Node(token, NodeType.Call,
                         nlimit.Count > 1 ? nlimit.Children.ToArray() : new[] { CreateNode("0", NodeType.Plain, TokenType.NumberData), nlimit });
                     yield break;
 
                 case "order":
-                    if (next?.IsMatch("by") == true) walker.Walk();
-                    var norders = ParseToken(walker);
+                    if (IsDelimiters(next)) walker.Walk();
+                    var norders = SequenceParseToken(walker);
                     var orderItems = norders.Is(NodeType.Block) ? norders.Children : new List<Node> { norders };
                     var childrenOrder = new List<Node>();
 
@@ -368,46 +458,16 @@ namespace MiMFa.Compiler.DaRQ
                     yield return CreateNode("", NodeType.Procedure, TokenType.Unknown, childrenOrder.ToArray());
                     yield break;
 
-                case "reverse":
-                case "desc":
-                    token.Update(TokenType.FunctionKeyword, "reverse");
-                    yield return new Node(token, NodeType.Call);
-                    yield break;
-
-                case "sort":
-                case "asc":
-                    token.Update(TokenType.FunctionKeyword, "sort");
-                    yield return new Node(token, NodeType.Call);
-                    yield break;
-
-                case "join":
-                case "concat":
-                case "flat":
-                case "fill":
-                case "at":
-                    yield return new Node(token.Update(TokenType.FunctionKeyword, dot + token.Value), NodeType.Call, ParseToken(walker).TrimSeparators() );
-                    yield break;
-
-                case "map":
-                case "find":
-                    yield return new Node(token.Update(TokenType.FunctionKeyword, dot + token.Value), NodeType.Call, 
-                        CreateCallableNode(ParseToken(walker).TrimSeparators(), CreateNode("data"))
-                    );
-                    yield break;
-
                 case "keys":
                 case "values":
                     yield return CreateNode("", new Node(token.Update(TokenType.FunctionKeyword, dot + token.Value), NodeType.Call), CreateCallFunctionNode(".toArray"));
                     yield break;
 
-                case "length":
-                    yield return new Node(token.Update(TokenType.IdentifierKeyword, dot + token.Value), NodeType.Call);
-                    yield break;
-
                 default:
                     break;
             }
-            foreach (var node in base.ParseStructureToken(token, walker))
+            
+            foreach (var node in base.ParseSuffixToken(token, walker))
                 yield return node;
         }
         protected override IEnumerable<Node> ParseKeywordToken(Token token, TokenWalker walker)
@@ -420,24 +480,25 @@ namespace MiMFa.Compiler.DaRQ
             if (nodes.Length == 1 && nodes[0].Is(NodeType.Call))
             {
                 Node node = nodes[0];
-                string fname = Compiler?.GetFunction(node.Token.Value);
-                string fcname = Compiler?.GetFunctionCommand(node.Token.Value);
-                string dcname = Compiler?.GetDirectionCommand(node.Token.Value);
-                string acname = Compiler?.GetActionCommand(node.Token.Value);
-                var ffc = fname ?? fcname;
+                string fname = Compiler?.GetFunctionName(node.Token.Value);
+                string iname = fname !=null?null:Compiler?.GetKeywordName(node.Token.Value);
+                string fcname = Compiler?.GetFunctionCommandName(node.Token.Value);
+                string dcname = Compiler?.GetDefinitionCommandName(node.Token.Value);
+                string acname = Compiler?.GetActionCommandName(node.Token.Value);
+                fname = fname ?? fcname;
                 if (node.Token.Is(TokenType.FunctionKeyword))
                 {
                     if (before?.Is(TokenType.ConcatenatorSymbol) == true) yield return node;
                     else
                     {
-                        node.Token.Update(TokenType.FunctionKeyword, acname ?? ffc ?? node.Token.Value);
+                        node.Token.Update(TokenType.FunctionKeyword, acname ?? fname ?? node.Token.Value);
                         foreach (var n in nodes)
                             yield return n;
                         if (!string.IsNullOrEmpty(acname) &&
                                 next != null &&
                                 next.Is(TokenType.Keyword)
                             )
-                            yield return new Node(token.Clone(TokenType.NamespaceKeyword), NodeType.Call, CreateNode(next.Is(TokenType.Structure)?"":".", NodeType.Plain, TokenType.ConcatenatorSymbol), ParseToken(walker));
+                            yield return new Node(token.Clone(TokenType.NamespaceKeyword), NodeType.Call, CreateNode(IsComplementors(next)?"":".", NodeType.Plain, TokenType.ConcatenatorSymbol), CompactParseToken(walker));
                     }
                     yield break;
                 }
@@ -446,44 +507,55 @@ namespace MiMFa.Compiler.DaRQ
                     if (acname != null) yield return CreateNode(acname, NodeType.Procedure, TokenType.Data);
                     else
                     {
-                        token.Update(TokenType.IdentifierKeyword, ffc ?? dcname ?? node.Token.Value);
-                        if (next?.Is(TokenType.Keyword, TokenType.Data, TokenType.StartScope) == true)
+                        token.Update(TokenType.IdentifierKeyword, fname ?? dcname ?? iname ?? node.Token.Value);
+                        if (
+                            next?.Is(TokenType.Keyword, TokenType.Data, TokenType.Start | TokenType.Scope) == true &&
+                            !IsSeparators(next) &&
+                            !IsMediators(next) &&
+                            !IsComplementors(next) &&
+                            !IsFinalizers(next) &&
+                            !IsOrganizers(next) &&
+                            (
+                                (fname != null && before?.Is(TokenType.Keyword, TokenType.ConcatenatorSymbol) != true) ||
+                                next.Is(TokenType.Data) ||
+                                next.IsMatch("(", "...") ||
+                                IsSeparators(next2) ||
+                                IsMediators(next2) ||
+                                IsComplementors(next2) ||
+                                IsFinalizers(next2) ||
+                                IsOrganizers(next2)
+                            )
+                        )
                         {
-                            if ((dcname == null || ffc != null) && !next.Is(TokenType.Structure) && (ffc != null || next.Is(TokenType.Data) || next.IsMatch("{", "(", "...") || next2?.Is(TokenType.SeparatorSymbol, TokenType.TerminatorSymbol) == true))
-                            {
-                                yield return new Node(
-                                    token.Clone(TokenType.FunctionKeyword),
-                                    NodeType.Call,
-                                    ParseToken(walker).TrimSeparators()
-                                );
-                                yield break;
-                            }
-                            else if (next.Is(TokenType.Keyword))
-                            {
-                                yield return new Node(token.Clone(TokenType.NamespaceKeyword), NodeType.Call, CreateNode(next.Is(TokenType.Structure)?"":".", NodeType.Plain, TokenType.ConcatenatorSymbol), ParseToken(walker));
-                                yield break;
-                            }
+                            yield return new Node(
+                                token.Clone(TokenType.FunctionKeyword),
+                                NodeType.Call,
+                                SequenceParseToken(walker)
+                            );
+                            yield break;
                         }
-                        else if (next?.Is(TokenType.Symbol, TokenType.EndScope) == true)
+                        else if (next.Is(TokenType.Keyword))
                         {
-                            if (fcname != null)
+                            yield return new Node(token.Clone(TokenType.NamespaceKeyword), NodeType.Call, CreateNode(IsComplementors(next) ? "" : ".", NodeType.Plain, TokenType.ConcatenatorSymbol), CompactParseToken(walker));
+                            yield break;
+                        }
+                        else if (fcname != null && (IsSeparators(next) || IsComplementors(next) || IsMediators(next) || IsFinalizers(next) || IsOrganizers(next)))
+                        {
+                            yield return CreateCallFunctionNode(fcname);
+                            yield break;
+                        }
+                        else if (IsDelimiters(next))
+                        {
+                            if (IsOrganizers(before))
                             {
-                                yield return CreateCallFunctionNode(fcname);
+                                walker.Remove(next);
+                                yield return new Node(token, NodeType.Call);
                                 yield break;
                             }
-                            else if (next.Is(TokenType.SeparatorSymbol, TokenType.TerminatorSymbol))
+                            else if (next2?.Is(TokenType.Keyword) == true || IsConnectors(next2) || IsComplementors(next2) || IsMediators(next2) || IsFinalizers(next2) || IsOrganizers(next2))
                             {
-                                if (next2?.IsIndependent() == true)
-                                {
-                                    yield return new Node(token, NodeType.Call);
-                                    yield break;
-                                }
-                                else if (before != null && (before.IsIndependent() || before.Is(TokenType.Data)))
-                                {
-                                    walker.Remove(next);
-                                    yield return new Node(token, NodeType.Call);
-                                    yield break;
-                                }
+                                yield return new Node(token, NodeType.Call);
+                                yield break;
                             }
                         }
 
@@ -496,20 +568,17 @@ namespace MiMFa.Compiler.DaRQ
             foreach (var node in nodes)
                 yield return node;
         }
-        protected override IEnumerable<Node> ParseFacilitatorToken(Token token, TokenWalker walker)
-        {
-            yield return new Node(token, NodeType.Procedure, SeparatedParseToken(walker).TrimSeparators());
-        }
         protected override IEnumerable<Node> ParseCommentToken(Token token, TokenWalker walker)
         {
             bool isblock = token.Value.Contains("\n") || token.Value.StartsWith("/*");
             yield return new Node(new Token(TokenType.Unknown), isblock ? NodeType.Procedure : NodeType.Block,
                 new Node(token.Clone(Value: isblock ? token.Value : token.Value), NodeType.Helper),
-                walker.Is(TokenType.EndScope) ? null : SeparatedParseToken(walker)
+                walker.Is(TokenType.End | TokenType.Scope) ? null : CompactParseToken(walker)
             );
         }
         protected override IEnumerable<Node> ParseSymbolToken(Token token, TokenWalker walker)
         {
+            var before = walker.PeekProcedure(-2);
             var next = walker.PeekProcedure();
             var next2 = walker.PeekProcedure(1);
             switch (token.Value.ToLower())
@@ -521,151 +590,189 @@ namespace MiMFa.Compiler.DaRQ
                         if (next2?.IsMatch("equal", "equals", "be", "===") == true)
                         {
                             walker.MoveToProcedure(); walker.MoveToProcedure();
-                            return ParseSymbolToken(token.Clone(TokenType.OperatorSymbol, "!==", null), walker);
+                            return ParseSymbolToken(token.Clone(TokenType.Middle | TokenType.Symbol, "!==", null), walker);
                         }
                         else if (next2?.Is(TokenType.StringData) == true && next2?.IsMatch("", "empty") == true)
                         {
                             walker.MoveToProcedure(); walker.MoveToProcedure();
-                            return ParseSymbolToken(token.Clone(TokenType.OperatorSymbol, "+ \"\" != \"\"", null), walker);
+                            return ParseSymbolToken(token.Clone(TokenType.Middle | TokenType.Symbol, "+ \"\" != \"\"", null), walker);
                         }
                         else if (next?.IsMatch("==", "=") == true)
                         {
                             walker.MoveToProcedure(); walker.MoveToProcedure();
-                            return ParseSymbolToken(token.Clone(TokenType.OperatorSymbol, "!=", null), walker);
+                            return ParseSymbolToken(token.Clone(TokenType.Middle | TokenType.Symbol, "!=", null), walker);
                         }
-                        else { walker.MoveToProcedure(); return ParseSymbolToken(token.Clone(TokenType.OperatorSymbol, "!=", null), walker); }
+                        else { walker.MoveToProcedure(); return ParseSymbolToken(token.Clone(TokenType.Middle | TokenType.Symbol, "!=", null), walker); }
                     }
                     else if (next?.IsMatch("equal", "equals", "be", "===") == true)
                     {
-                        walker.MoveToProcedure(); return ParseSymbolToken(token.Clone(TokenType.OperatorSymbol, "===", null), walker);
+                        walker.MoveToProcedure(); return ParseSymbolToken(token.Clone(TokenType.Middle | TokenType.Symbol, "===", null), walker);
                     }
                     else if (next?.Is(TokenType.StringData) == true && next?.IsMatch("", "empty") == true)
                     {
-                        walker.MoveToProcedure(); return ParseSymbolToken(token.Clone(TokenType.OperatorSymbol, "+ \"\" == \"\"", null), walker);
+                        walker.MoveToProcedure(); return ParseSymbolToken(token.Clone(TokenType.Middle | TokenType.Symbol, "+ \"\" == \"\"", null), walker);
                     }
-                    else return ParseSymbolToken(token.Clone(TokenType.OperatorSymbol, "==", null), walker);
+                    else return ParseSymbolToken(token.Clone(TokenType.Middle | TokenType.Symbol, "==", null), walker);
 
                 case "equal":
                 case "equals":
-                    if (next?.IsMatch("to") == true || next?.Is(TokenType.SeparatorSymbol) == true)
+                    if (IsDelimiters(next))
                     {
                         walker.MoveToProcedure();
-                        return ParseSymbolToken(token.Clone(TokenType.OperatorSymbol, "===", null), walker);
+                        return ParseSymbolToken(token.Clone(TokenType.Middle | TokenType.Symbol, "===", null), walker);
                     }
-                    else return ParseSymbolToken(token.Clone(TokenType.OperatorSymbol, "===", null), walker);
+                    else return ParseSymbolToken(token.Clone(TokenType.Middle | TokenType.Symbol, "===", null), walker);
 
                 case "not":
                     if (next?.IsMatch("equal", "equals", "===") == true)
                     {
                         walker.MoveToProcedure();
-                        return ParseSymbolToken(token.Clone(TokenType.OperatorSymbol, "!==", null), walker);
+                        return ParseSymbolToken(token.Clone(TokenType.Middle | TokenType.Symbol, "!==", null), walker);
                     }
                     else if (next?.IsMatch("be", "==", "=") == true)
                     {
                         walker.MoveToProcedure();
-                        return ParseSymbolToken(token.Clone(TokenType.OperatorSymbol, "!=", null), walker);
+                        return ParseSymbolToken(token.Clone(TokenType.Middle | TokenType.Symbol, "!=", null), walker);
                     }
                     else if (next?.Is(TokenType.StringData) == true && next?.IsMatch("", "empty") == true)
                     {
                         walker.MoveToProcedure();
-                        return ParseSymbolToken(token.Clone(TokenType.OperatorSymbol, "+ \"\" != \"\"", null), walker);
+                        return ParseSymbolToken(token.Clone(TokenType.Middle | TokenType.Symbol, "+ \"\" != \"\"", null), walker);
                     }
-                    else return ParseSymbolToken(token.Clone(TokenType.OperatorSymbol, "!", null), walker);
+                    else return ParseSymbolToken(token.Clone(TokenType.Middle | TokenType.Symbol, "!", null), walker);
                 default:
                     break;
             }
-            if (next?.Is(TokenType.SeparatorSymbol, TokenType.TerminatorSymbol) == true)
-                if (token.Is(TokenType.SeparatorSymbol, TokenType.TerminatorSymbol))
+
+            if (
+                (IsAcceptors(before) || IsDelimiters(before) || IsInitializers(before) || IsOrganizers(before)) &&
+                !IsSeparators(token) &&
+                (IsSeparators(next) || IsComplementors(next) || IsMediators(next) || IsFinalizers(next) || IsOrganizers(next))
+            )
+                return ParseDataToken(token.Clone(TokenType.StringData), walker);
+            else if (next?.Is(TokenType.Symbol) == true && !IsInitializers(next))
+                if (token.Is(TokenType.DelimiterSymbol))
                 {
-                    TargetLocation = Locality - 1;
+                    BreakCollectSwitch++;
                     return new Node[] { new Node() };
                 }
-                else return new Node[] { new Node(token, NodeType.Plain) };
-            else if (next?.Is(TokenType.Symbol) == true)
-                return ParseSymbolToken(token.Clone(token.Type | next.Type, token.Value + next.Value, null), walker.MoveToProcedure());
-            else if (token.Is(TokenType.SeparatorSymbol, TokenType.TerminatorSymbol))
-                if (next?.Is(TokenType.Structure | TokenType.Keyword) == true)
+                else if (token.Is(TokenType.TerminatorSymbol))
+                {
+                    BreakParentSwitch++;
                     return new Node[] { new Node() };
-                else if (next?.IsDependent() != true && next?.IsIndependent() == true)
-                    return new Node[] { new Node(token, NodeType.Plain) };
+                }
+                else return ParseSymbolToken(token.Clone(token.Type | next.Type, token.Value + next.Value, null), walker.MoveToProcedure());
+            else if (IsSeparators(token))
+            {
+                if (IsConnectors(next) || IsComplementors(next) || IsMediators(next) || IsFinalizers(next))
+                    return new Node[] { new Node() };
+                else if (IsOrganizers(next))
+                    return new Node[] { new Node(token.Update(TokenType.TerminatorSymbol, ";"), NodeType.Plain) };
+                else if (token.Is(TokenType.DelimiterSymbol)) 
+                    return new Node[] { new Node(token, NodeType.Procedure, SequenceParseToken(walker)) };
+                else if (token.Is(TokenType.TerminatorSymbol))
+                    return new Node[] { new Node(token, NodeType.Procedure) };
+            }
             return base.ParseSymbolToken(token, walker);
         }
 
+        public virtual bool IsGlobalNeeder(Node node) => node != null && node.Has(n => n.Token.IsMatch("return", "yield", "{", "do", "begin", "end"));
 
-        public static TokenWalker FitWalker(TokenWalker walker)
+        public virtual bool IsFlag(Token token) => token != null && token.Is(TokenType.End | TokenType.Scope);
+
+        public virtual bool IsAcceptors(Token token) => token != null && (token.Is(TokenType.FunctionKeyword) || (Compiler?.GetFunctionName(token.Value) ?? Compiler?.GetFunctionCommandName(token.Value) ?? null) != null);
+        public virtual bool IsInitializers(Token token) => token != null && token.Is(TokenType.Start, TokenType.Prefix);
+        public virtual bool IsConnectors(Token token) => token != null && (token.IsMatch("[", "(") || token.Is(TokenType.Middle | TokenType.Symbol) || token.Is(TokenType.Suffix | TokenType.Symbol));
+        public virtual bool IsComplementors(Token token) => token != null && token.Is(TokenType.Suffix, TokenType.ConcatenatorSymbol);
+        public virtual bool IsMediators(Token token) => token != null && token.Is(TokenType.Middle);
+        public virtual bool IsSeparators(Token token) => token != null && token.Is(TokenType.DelimiterSymbol, TokenType.TerminatorSymbol);
+        public virtual bool IsDelimiters(Token token) => token != null && token.Is(TokenType.DelimiterSymbol);
+        public virtual bool IsFinalizers(Token token) => token != null && token.Is(TokenType.End, TokenType.TerminatorSymbol);
+        public virtual bool IsOrganizers(Token token) => token != null && token.Is(TokenType.Structure, TokenType.TerminatorSymbol);
+
+
+        public virtual TokenWalker TrimSeparators(TokenWalker walker)
         {
-            return walker.Is(TokenType.SeparatorSymbol, TokenType.TerminatorSymbol) ? walker.MoveToProcedure() : walker;
+            return walker.Is(TokenType.DelimiterSymbol, TokenType.TerminatorSymbol) ? walker.MoveToProcedure() : walker;
+        }
+        public virtual Node TrimSeparators(Node node)
+        {
+            if (node.Is(NodeType.Block) && node.Token.IsMatch("{")) return node;
+            return node.Trim(n => n.Count <= 0 && n.Ancestor(p => p.Is(NodeType.Block))?.Token.IsMatch("{") != true && n.Token.Is(TokenType.DelimiterSymbol, TokenType.TerminatorSymbol));
         }
 
-        public static Node CreateNode(string value = "", params Node[] children) =>
+        public virtual Node CreateNode(string value = "", params Node[] children) =>
             CreateNode(value, NodeType.Plain, TokenType.Unknown, children);
-        public static Node CreateNode(string value, TokenType tokenType, NodeType nodeType = NodeType.Plain, params Node[] children) =>
+        public virtual Node CreateNode(string value, TokenType tokenType, NodeType nodeType = NodeType.Plain, params Node[] children) =>
             CreateNode(value, nodeType, tokenType, children);
-        public static Node CreateNode(string value, NodeType nodeType, TokenType tokenType = TokenType.Unknown, params Node[] children)
+        public virtual Node CreateNode(string value, NodeType nodeType, TokenType tokenType = TokenType.Unknown, params Node[] children)
         {
             return new Node(new Token(tokenType, value), nodeType, children);
         }
-        public static Node CreatePackNode(params Node[] children)
+        public virtual Node CreatePackNode(params Node[] children)
         {
+            if (children.Length == 1 && children[0].Is(NodeType.Block) && children[0].Token.IsMatch("(")) return children[0];
             return new Node(new Token(TokenType.Scope, "("), NodeType.Block, children.ToArray());
         }
-        public static Node CreateLineNode(Node node)
+        public virtual Node CreateLineNode(Node node)
         {
-            if (node.LastLeaf.Token.Is(TokenType.SeparatorSymbol, TokenType.TerminatorSymbol))
+            if (node == null) return CreateNode(";", TokenType.TerminatorSymbol);
+            if (node.LastLeaf.Token.Is(TokenType.DelimiterSymbol, TokenType.TerminatorSymbol))
                 node.LastLeaf.Token.Update(TokenType.TerminatorSymbol, ";");
             else if (!node.Is(NodeType.Block))
                 return CreateNode("", node, CreateNode(";", TokenType.TerminatorSymbol));
             return node;
         }
-        public static Node CreateBlockNode(params Node[] children)
+        public virtual Node CreateBlockNode(params Node[] children)
         {
-            return new Node(new Token(TokenType.StartScope, "{"), NodeType.Block, children.ToArray());
+            if (children.Length == 1 && children[0].Is(NodeType.Block) && children[0].Token.IsMatch("{")) return children[0];
+            return new Node(new Token(TokenType.Start | TokenType.Scope, "{"), NodeType.Block, children.ToArray());
         }
-        public static Node CreatePackOrBlockNode(params Node[] children)
+        public virtual Node CreatePackOrBlockNode(params Node[] children)
         {
             children = children.Where(c => !c.Is(NodeType.None)).ToArray();
             if (children.Length == 0) return CreatePackNode();
             if (children.Length > 1) return CreateBlockNode(children);
             if (children[0].Is(NodeType.Block, NodeType.ShortSelector)) return children[0];
-            if (children[0].Is(NodeType.Rule)) return CreateBlockNode(children[0]);
-            return CreatePackNode(children[0].TrimSeparators());
+            if (children[0].Is(NodeType.Rule) || IsGlobalNeeder(children[0])) return CreateBlockNode(children[0]);
+            return TrimSeparators(CreatePackNode(children[0]));
         }
-        public static Node CreateCallNode(Node node, params Node[] args)
+        public virtual Node CreateCallNode(Node node, params Node[] args)
         {
-            return CreateNode("", node.TrimSeparators(), CreatePackNode(args));
+            return CreateNode("", TrimSeparators(node), CreatePackNode(args));
         }
-        public static Node CreateCallFunctionNode(string name, params Node[] args)
+        public virtual Node CreateCallFunctionNode(string name, params Node[] args)
         {
             return new Node(new Token(TokenType.FunctionKeyword, name), NodeType.Call, args);
         }
-        public static Node CreateDefineIdentifierNode(string name, Node value, string state = "var")
+        public virtual Node CreateDefineIdentifierNode(string name, Node value, string state = "var")
         {
             if(string.IsNullOrEmpty(state)) return new Node(new Token(TokenType.IdentifierKeyword, name), NodeType.Procedure,
                 CreateNode("="),
                 value
             );
-            else return new Node(new Token(TokenType.Statement, state), NodeType.Define,
+            else return new Node(new Token(TokenType.Structure, state), NodeType.Define,
                 CreateNode(name, NodeType.Call, TokenType.IdentifierKeyword),
                 CreateNode("="),
                 value
             );
         }
-        public static Node CreateDefineFunctionNode(string name, Node body, params Node[] args)
+        public virtual Node CreateDefineFunctionNode(string name, Node body, params Node[] args)
         {
             return new Node(new Token(TokenType.FunctionKeyword, name), NodeType.Define, 
                 CreatePackNode(args),
                 body
             );
         }
-        public static Node CreateProceduresNode(string value = "", params Node[] children)
+        public virtual Node CreateProceduresNode(string value = "", params Node[] children)
         {
             return new Node(new Token(TokenType.Unknown, value), NodeType.Procedure, children.ToArray());
         }
-        public static Node CreateCallableNode(Node body, params Node[] args)
+        public virtual Node CreateCallableNode(Node body, params Node[] args)
         {
-            return CreatePackNode(new Node(new Token(TokenType.FunctionKeyword, ""), NodeType.Define, CreatePackNode(args), CreatePackOrBlockNode(body)));
+            return CreatePackNode(CreatePackNode(args), CreateNode("=>", TokenType.Middle | TokenType.Symbol, NodeType.Procedure, CreatePackOrBlockNode(body)));
         }
-        public static Node CreateNamespaceNode(string ns, Node node)
+        public virtual Node CreateNamespaceNode(string ns, Node node)
         {
             return CreateNode(ns + ".", NodeType.Plain, TokenType.ConcatenatorSymbol, node);
         }
