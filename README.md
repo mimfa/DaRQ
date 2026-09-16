@@ -15,14 +15,14 @@ DaRQ has **five** main principles:
     ```js
     For each url of list, load the url, then append all h3#title, to destination;
     ```
-    This will converts to the bellow pure js code:
+2. Every Command will be compiled deterministically into JavaScript.
+    * The previous query will converts to the bellow pure js code directly:
     ```js
     for(url of list) load(url).then(((data) => {
         handlers(data);
         append(all("h3#title"), destination);
     });
     ```
-2. Every Command will be compiled deterministically into JavaScript.
     * There is no hidden behavior.
     * Never runtime guessing.
 3. The current execution Variables are always available.
