@@ -1,8 +1,8 @@
 # DaRQ (Declarative Automation Rules Query Language)
 
 DaRQ is a deterministic, reusable, human-readable, extensible command language for acquiring, transforming, analyzing, and automating data workflows. A structured intermediate representation (IR) between natural language and executable JavaScript scraping logic. In other words, DaRQ is a procedural, English-like domain-specific language that compiles deterministically into JavaScript browser automation code.
-* Scripts written by this technology called "Map" will parse into complex and optimized pure JavaScript code to be interpreted in the browser.
-* You can write pure JavaScript between your Map freely.
+* DaRQ queries will parse directly into complex and optimized pure JavaScript code to use everywhere.
+* You can write pure JavaScript between your queries freely.
 
 Start DaRQ directly using the tutorial sample [here](SAMPLE.md) quickly...
 
@@ -13,7 +13,14 @@ Also you can find more examples and their parsed JS versions [here](Samples/).
 DaRQ has **five** main principles:
 1. Every Statement will be the same as English grammar.
     ```js
-    FOR EACH url OF list, LOAD url, THEN APPEND ALL "h2" TO destination;
+    For each url of list, load the url, then append all h3#title, to destination;
+    ```
+    This will converts to the bellow pure js code:
+    ```js
+    for(url of list) load(url).then(((data) => {
+        handlers(data);
+        append(all("h3#title"), destination);
+    });
     ```
 2. Every Command will be compiled deterministically into JavaScript.
     * There is no hidden behavior.
@@ -208,7 +215,7 @@ All commands represent executable operations.
 * A very small set that the compiler itself needs for parsing or semantic analysis defined built in.
 * They will include the following cases:
     * All simple DaRQ built-in commands.
-    * All third-party commands (you add them to your Map using the USE statement).
+    * All third-party commands (you add them to your queries using the USE statement).
     * All user-defined commands (You defined using the COMMAND statement).
 * The user-defined command will be accessible exactly like other global commands, too.
 * You can define commands in four ways:
