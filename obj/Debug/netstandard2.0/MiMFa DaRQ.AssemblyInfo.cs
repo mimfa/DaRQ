@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MiMFa")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+65dc4f7b29f76ab53d8a13694b7deb754216f6e4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+764d576ac7d2aebbc130693c6e5b27c764797260")]
 [assembly: System.Reflection.AssemblyProductAttribute("DaRQ")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MiMFa DaRQ")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

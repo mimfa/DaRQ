@@ -516,7 +516,7 @@ namespace MiMFa.Compiler.DaRQ
                             !IsFinalizers(next) &&
                             !IsOrganizers(next) &&
                             (
-                                (fname != null && before?.Is(TokenType.Keyword, TokenType.ConcatenatorSymbol) != true) ||
+                                fname != null ||
                                 next.Is(TokenType.Data) ||
                                 next.IsMatch("(", "...") ||
                                 IsSeparators(next2) ||
