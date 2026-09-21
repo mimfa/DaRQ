@@ -84,6 +84,16 @@ namespace MiMFa.Compiler.Model
                 if (((int)Type & (int)nt) == (int)nt) return true;
             return false;
         }
+        public bool Is(params TokenType[] tokenTypes)
+        {
+            foreach (var nt in tokenTypes)
+                if (((int)Token.Type & (int)nt) == (int)nt) return true;
+            return false;
+        }
+        public bool IsMatch(params string[] values)
+        {
+            return Token.IsMatch(values);
+        }
         public bool Has(Func<Node, bool> condition)
         {
             return condition(this) || Children.Any(n=>n.Has(condition));
@@ -91,8 +101,6 @@ namespace MiMFa.Compiler.Model
 
         public bool IsEmpty() => Is(NodeType.None, NodeType.Unknown) && Token.Is(TokenType.None, TokenType.Unknown) && Count <= 0 && Token.IsMatch("");
         public bool IsProcedure() => !Is(NodeType.None);
-        public bool IsIndependent() => Is(NodeType.Program, NodeType.Rule);
-        public bool IsDependent() => Is(NodeType.Compute);
 
         public Node Add(Node node)
         {
@@ -165,10 +173,32 @@ namespace MiMFa.Compiler.Model
             }
             return this;
         }
-
+        public Node Ancestor(Func<Node, bool> aggregator) => Parent == null? null: (aggregator(Parent) ? Parent : Parent.Ancestor(aggregator));
+        public Node Seek(Func<Node, bool> aggregator)
+        {
+            if (aggregator(this)) return this;
+            foreach (var child in Children)
+                if (aggregator(child)) return child;
+                else
+                {
+                    var c = child.Child(aggregator);
+                    if (c != null) return c;
+                }
+            return null;
+        }
         public Node ForceChild(int index) => Child(index)??new Node();
         public Node Child(int index) => children.Count > index ? children[index] : null;
-        public Node Ancestor(Func<Node, bool> aggregator) => Parent == null? null: (aggregator(Parent) ? Parent : Parent.Ancestor(aggregator));
+        public Node Child(Func<Node, bool> aggregator)
+        {
+            foreach (var child in Children)
+                if (aggregator(child)) return child;
+                else
+                {
+                    var c = child.Child(aggregator);
+                    if (c != null) return c;
+                }
+            return null;
+        }
 
         public IEnumerable<Node> Flat(Func<Node, bool> aggregator = null)
         {
@@ -178,7 +208,7 @@ namespace MiMFa.Compiler.Model
                     yield return cc;
         }
 
-        public Node AddRange(IEnumerable<Node> nodes)
+        public Node AddRange(params Node[] nodes)
         {
             foreach (var node in nodes) Add(node);
             return this;

@@ -7,27 +7,27 @@ namespace MiMFa.Compiler.Model
     {
         public string Value { get; set; }
         public TokenType Type { get; set; }
-        public Location Location { get; set; }
+        public Position Position { get; set; }
 
-        public Token(string value = null, TokenType? type = null, Location location = null)
+        public Token(string value = null, TokenType? type = null, Position location = null)
         {
             Value = value ?? string.Empty;
             Type = type ?? (string.IsNullOrEmpty(value) ? TokenType.None : TokenType.Unknown);
-            Location = location ?? new Location();
+            Position = location ?? new Position();
         }
-        public Token(TokenType? type, string value = null, Location location = null) : this(value, type, location) { }
+        public Token(TokenType? type, string value = null, Position position = null) : this(value, type, position) { }
 
-        public Token Update(TokenType? Type = null, string Value = null, Location Location = null)
+        public Token Update(TokenType? Type = null, string Value = null, Position position = null)
         {
             this.Value = Value ?? this.Value;
             this.Type = Type ?? this.Type;
-            this.Location = Location ?? this.Location;
+            this.Position = position ?? this.Position;
             return this;
         }
 
-        public Token Clone(TokenType? Type = null, string Value = null, Location Location = null)
+        public Token Clone(TokenType? Type = null, string Value = null, Position position = null)
         {
-            return new Token(Type ?? this.Type, Value ?? this.Value, Location ?? this.Location);
+            return new Token(Type ?? this.Type, Value ?? this.Value, position ?? this.Position);
         }
 
         public bool Is(params TokenType[] tokenTypes)

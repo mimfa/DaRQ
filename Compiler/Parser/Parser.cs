@@ -7,41 +7,48 @@ using MiMFa.Compiler.Walker;
 
 namespace MiMFa.Compiler.Parser
 {
+    /// <summary>
+    /// Lexical parser stage. It consumes exactly one token per iteration and
+    /// produces exactly one independent node for that token. Hierarchy and
+    /// language semantics belong to the assembler stage.
+    /// </summary>
     public abstract class Parser : IStage
     {
         public virtual Compiler Compiler { get; set; }
 
         public virtual bool Initialize(MiMFa.Compiler.Compiler compiler)
         {
-            if (compiler != null) this.Compiler = compiler;
+            if (compiler != null) Compiler = compiler;
             return true;
         }
+
         public virtual object Transform(object input, Compiler compiler)
         {
-            var tokens = (Token[])input;
-            var walker = new TokenWalker(tokens, compiler?.Input?.Source);
+            var walker = new TokenWalker((Token[])input, compiler?.Input?.Source);
             return Parse(walker, compiler).ToArray();
         }
+
         public virtual IEnumerable<Node> Parse(TokenWalker walker, Compiler compiler = null)
         {
             if (!Initialize(compiler)) yield break;
             while (!walker.IsEnded)
-                yield return ParseToken(walker);
+                yield return ParseToken(walker.Walk(), walker);
         }
 
-        protected virtual Node ParseToken(TokenWalker walker)
+        protected virtual Node ParseToken(Token token, TokenWalker walker)
         {
-            var nodes = ParseTokens(walker).ToList();
-            if (nodes.Count > 1) return new Node(null, NodeType.Plain, nodes.ToArray());
-            if (nodes.Count == 1) return nodes[0];
+            var nodes = ParseTokens(token, walker);
+            var list = new List<Node>(nodes);
+            if (list.Count > 1) return new Node(null, NodeType.Chunk, list.ToArray());
+            if (list.Count == 1) return list[0];
             return new Node();
         }
-        protected virtual IEnumerable<Node> ParseTokens(TokenWalker walker)
+
+        protected virtual IEnumerable<Node> ParseTokens(Token token, TokenWalker walker)
         {
-            var token = walker.Walk();
             Node latest = null;
-            if (latest == null && token.Is(TokenType.Structure))
-                foreach (var node in ParseStructureToken(token, walker))
+            if (latest == null && token.Is(TokenType.Statement))
+                foreach (var node in ParseStatementToken(token, walker))
                     yield return latest = node;
             if (latest == null && token.Is(TokenType.Scope))
                 foreach (var node in ParseScopeToken(token, walker))
@@ -81,7 +88,8 @@ namespace MiMFa.Compiler.Parser
             if (latest == null) yield return new Node { Token = token, Type = NodeType.Unknown };
         }
 
-        protected abstract IEnumerable<Node> ParseStructureToken(Token token, TokenWalker walker);
+        // Kept as extension points for semantic/legacy parsers.
+        protected abstract IEnumerable<Node> ParseStatementToken(Token token, TokenWalker walker);
         protected abstract IEnumerable<Node> ParseScopeToken(Token token, TokenWalker walker);
         protected abstract IEnumerable<Node> ParseDataToken(Token token, TokenWalker walker);
         protected abstract IEnumerable<Node> ParseSymbolToken(Token token, TokenWalker walker);

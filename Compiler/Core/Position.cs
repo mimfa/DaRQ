@@ -3,20 +3,20 @@ using System;
 
 namespace MiMFa.Compiler.Core
 {
-    public class Location
+    public class Position
     {
         public int Index { get; }
         public int Line { get; }
         public int Column { get; }
 
-        public Location(int index = 0, int line = 1, int column = 1)
+        public Position(int index = 0, int line = 1, int column = 1)
         {
             Index = index;
             Line = line;
             Column = column;
         }
 
-        public Location Move(int length, string text = "")
+        public Position Move(int length, string text = "")
         {
             var line = Line;
             var column = Column;
@@ -29,10 +29,10 @@ namespace MiMFa.Compiler.Core
                 }
                 else column++;
             }
-            return new Location(Index + length, line, column);
+            return new Position(Index + length, line, column);
         }
 
-        public bool Equals(Location location)
+        public bool Equals(Position location)
         {
             return location != null && Index == location.Index && Line == location.Line && Column == location.Column;
         }

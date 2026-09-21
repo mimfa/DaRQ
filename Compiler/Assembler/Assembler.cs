@@ -27,6 +27,45 @@ namespace MiMFa.Compiler.Assembler
                 yield return AssembleNode(walker.Walk(), walker);
         }
 
-        protected abstract Node AssembleNode(Node node, NodeWalker walker);
+        protected virtual Node AssembleNode(Node node, NodeWalker walker)
+        {
+            Node latest = null;
+            if (latest == null && node.Is(NodeType.Structure))
+                latest = AssembleStructureNode(node, walker);
+            if (latest == null && node.Is(NodeType.Program))
+                latest = AssembleProgramNode(node, walker);
+            if (latest == null && node.Is(NodeType.Region))
+                latest = AssembleRegionNode(node, walker);
+            if (latest == null && node.Is(NodeType.Line))
+                latest = AssembleLineNode(node, walker);
+            if (latest == null && node.Is(NodeType.Chunk))
+                latest = AssembleChunkNode(node, walker);
+
+            if (latest == null && node.Is(NodeType.Independ))
+                latest = AssembleIndependNode(node, walker);
+            if (latest == null && node.Is(NodeType.Depend))
+                latest = AssembleDependNode(node, walker);
+            if (latest == null && node.Is(NodeType.Append))
+                latest = AssembleAppendNode(node, walker);
+            if (latest == null && node.Is(NodeType.Prepend))
+                latest = AssemblePrependNode(node, walker);
+
+            if (latest == null && node.Is(NodeType.None))
+                latest = node.Update(type: NodeType.None);
+            return latest??AssembleUnknownNode(node, walker);
+        }
+
+        protected abstract Node AssembleStructureNode(Node node, NodeWalker walker);
+        protected abstract Node AssembleProgramNode(Node node, NodeWalker walker);
+        protected abstract Node AssembleRegionNode(Node node, NodeWalker walker);
+        protected abstract Node AssembleLineNode(Node node, NodeWalker walker);
+        protected abstract Node AssembleChunkNode(Node node, NodeWalker walker);
+
+        protected abstract Node AssembleIndependNode(Node node, NodeWalker walker);
+        protected abstract Node AssembleDependNode(Node node, NodeWalker walker);
+        protected abstract Node AssembleAppendNode(Node node, NodeWalker walker);
+        protected abstract Node AssemblePrependNode(Node node, NodeWalker walker);
+
+        protected abstract Node AssembleUnknownNode(Node node, NodeWalker walker);
     }
 }

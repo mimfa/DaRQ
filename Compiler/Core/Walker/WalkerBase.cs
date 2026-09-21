@@ -83,19 +83,19 @@ namespace MiMFa.Compiler.Walker
             return this;
         }
 
-        public virtual IWalker<T> Reset(int Position = 0)
+        public virtual IWalker<T> Reset(int index = 0)
         {
-            this.Position = Math.Max(Math.Min(Content.Length, Position), 0);
+            this.Position = Math.Max(Math.Min(Content.Length, index), 0);
             return this;
         }
 
-        public virtual IWalker<T> Remove(Location location, int count = 1)
+        public virtual IWalker<T> Remove(Position position, int count = 1)
         {
-            return Remove(location.Index, count);
+            return Remove(position.Index, count);
         }
-        public virtual IWalker<T> Remove(int start = -1, int count = 1)
+        public virtual IWalker<T> Remove(int index = -1, int count = 1)
         {
-            return Replace(start < 0 ? Position : start, count, new T[0]);
+            return Replace(index < 0 ? Position : index, count, new T[0]);
         }
         public virtual IWalker<T> Remove(T item)
         {
@@ -111,16 +111,16 @@ namespace MiMFa.Compiler.Walker
             return this;
         }
 
-        public virtual IWalker<T> Replace(Location location, int count, params T[] replacement)
+        public virtual IWalker<T> Replace(Position position, int count, params T[] replacement)
         {
-            return Replace(location.Index, count, replacement);
+            return Replace(position.Index, count, replacement);
         }
-        public virtual IWalker<T> Replace(int start, int count, params T[] replacement)
+        public virtual IWalker<T> Replace(int index, int count, params T[] replacement)
         {
             var list = new List<T>();
-            list.AddRange(Content.Take(start));
+            list.AddRange(Content.Take(index));
             list.AddRange(replacement);
-            list.AddRange(Content.Skip(start + count));
+            list.AddRange(Content.Skip(index + count));
             Content = list.ToArray();
             return this;
         }
@@ -201,5 +201,6 @@ namespace MiMFa.Compiler.Walker
             TOut o;
             while ((o = convertor(p = Walk())) != null) yield return o;
         }
+
     }
 }

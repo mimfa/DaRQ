@@ -10,7 +10,7 @@ namespace MiMFa.Compiler.Walker
         private int line = 1;
         private int column = 1;
 
-        public Location Location => new Location(this.Position, this.line, this.column);
+        public Position Location => new Position(this.Position, this.line, this.column);
 
         public CodeWalker(string content, string source = null) : base(content?.ToCharArray().Select(c=>c.ToString()).ToArray() ?? new string[0], source)
         {

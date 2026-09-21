@@ -80,7 +80,7 @@ namespace MiMFa.Compiler.JavaScript
                 case "function":
                     walker.Move(word.Length);
                     walker.MoveToProcedure();
-                    return new Token(TokenType.Structure, word, location);
+                    return new Token(TokenType.Statement, word, location);
 
                 case "of":
                 case "in":
@@ -107,7 +107,7 @@ namespace MiMFa.Compiler.JavaScript
                 case "static":
                     walker.Move(word.Length);
                     walker.MoveToProcedure();
-                    return new Token(TokenType.Structure, word, location);
+                    return new Token(TokenType.Statement, word, location);
             }
             if (current == "/")
             {
@@ -131,7 +131,7 @@ namespace MiMFa.Compiler.JavaScript
             return new Token(TokenType.Unknown, walker.Walk().ToString(), location);
         }
 
-        protected virtual Token TokenizeKeyword(CodeWalker walker, Location location)
+        protected virtual Token TokenizeKeyword(CodeWalker walker, Position location)
         {
             var chars = walker.WalkWhile(ch => Regex.IsMatch(ch.ToString(), "[A-Za-z0-9_$]")).ToArray();
             var value = string.Concat(chars);
@@ -147,13 +147,13 @@ namespace MiMFa.Compiler.JavaScript
             return new Token(type, value, location);
         }
 
-        protected virtual Token TokenizeNumber(CodeWalker walker, Location location)
+        protected virtual Token TokenizeNumber(CodeWalker walker, Position location)
         {
             var value = string.Concat(walker.WalkWhile(ch => Regex.IsMatch(ch.ToString(), "[0-9._]")).ToArray());
             return new Token(TokenType.NumberData, value, location);
         }
 
-        protected virtual Token TokenizeRegExPath(CodeWalker walker, Location location)
+        protected virtual Token TokenizeRegExPath(CodeWalker walker, Position location)
         {
             walker.Walk(); // consume '/'
             var value = string.Concat(walker.WalkUntil(ch => ch == "/" && walker.Peek(-1) != (this.Compiler?.Options?.Escape ?? "\\")[0].ToString()).ToArray());
@@ -162,7 +162,7 @@ namespace MiMFa.Compiler.JavaScript
             return new Token(TokenType.PatternData, value, location);
         }
 
-        protected virtual Token TokenizeString(CodeWalker walker, Location location)
+        protected virtual Token TokenizeString(CodeWalker walker, Position location)
         {
             var quote = walker.Walk();
             var value = "";
@@ -182,7 +182,7 @@ namespace MiMFa.Compiler.JavaScript
             return new Token(quote == "`" && value.Contains("${") ? TokenType.TemplateStringData : TokenType.StringData, value, location);
         }
 
-        protected virtual Token TokenizeOperator(CodeWalker walker, Location location)
+        protected virtual Token TokenizeOperator(CodeWalker walker, Position location)
         {
             var sign = string.Concat(walker.WalkUntil(ch => Regex.IsMatch(ch.ToString(), "[\\w\\d\\s_$]", RegexOptions.IgnoreCase)).ToArray());
             while (true)
@@ -227,18 +227,18 @@ namespace MiMFa.Compiler.JavaScript
             }
         }
 
-        protected virtual Token TokenizeComment(CodeWalker walker, Location location)
+        protected virtual Token TokenizeComment(CodeWalker walker, Position location)
         {
             walker.Move(2);
             var value = string.Concat(walker.WalkUntil(ch => ch == "\r" || ch == "\n").ToArray());
             return new Token(TokenType.Comment, $"//{value}", location);
         }
 
-        protected virtual Token TokenizeCommentBlock(CodeWalker walker, Location location)
+        protected virtual Token TokenizeCommentBlock(CodeWalker walker, Position location)
         {
             walker.Move(2);
             var value = string.Concat(walker.WalkUntil(ch => ch == "*" && walker.Peek(1) == "/").ToArray());
-            return new Token(TokenType.Comment, $"/*{value}" + walker.Walk() + walker.Walk() + walker.WalkToProcedure(), location);
+            return new Token(TokenType.Comment, $"/*{value}" + walker.Walk() + walker.Walk(), location);
         }
     }
 }

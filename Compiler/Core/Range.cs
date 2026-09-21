@@ -5,10 +5,10 @@ namespace MiMFa.Compiler.Core
 {
     public class Range
     {
-        public Location Start { get; }
-        public Location End { get; }
+        public Position Start { get; }
+        public Position End { get; }
 
-        public Range(Location start, Location end)
+        public Range(Position start, Position end)
         {
             Start = start;
             End = end;
@@ -16,7 +16,7 @@ namespace MiMFa.Compiler.Core
 
         public int Length => End.Index - Start.Index;
 
-        public bool Contains(Location location) => location.Index >= Start.Index && location.Index <= End.Index;
+        public bool Contains(Position location) => location.Index >= Start.Index && location.Index <= End.Index;
 
         public bool Overlaps(Range range) => Start.Index <= range.End.Index && End.Index >= range.Start.Index;
 

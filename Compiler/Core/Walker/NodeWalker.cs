@@ -28,5 +28,86 @@ namespace MiMFa.Compiler.Walker
             }
             return null;
         }
+
+        public Node PeekProcedure(int offset = 0)
+        {
+            Node p;
+            if (offset < 0)
+            {
+                int o = 0;
+                while ((p = base.Peek(--o)) != null)
+                {
+                    if (p.IsProcedure())
+                    {
+                        if (offset >= o) return p;
+                    }
+                    else offset--;
+                }
+            }
+            else
+            {
+                int o = 0;
+                while ((p = base.Peek(o++)) != null)
+                {
+                    if (p.IsProcedure())
+                    {
+                        if (offset < o) return p;
+                    }
+                    else offset++;
+                }
+            }
+            return null;
+        }
+
+        public NodeWalker Move(int count = 1, params NodeType[] ofTypes)
+        {
+            Node p;
+            int number = 0;
+            if (ofTypes.Length > 0)
+            {
+                if (count > 0)
+                {
+                    while (number < count && (p = base.Peek(number++)) != null)
+                    {
+                        bool ok = false;
+                        foreach (var v in ofTypes) if ((v & p.Type) == v) { ok = true; break; }
+                        if (!ok) count++;
+                    }
+                }
+                else
+                {
+                    while (number > count && (p = base.Peek(number--)) != null)
+                    {
+                        bool ok = false;
+                        foreach (var v in ofTypes) if ((v & p.Type) == v) { ok = true; break; }
+                        if (!ok) count--;
+                    }
+                }
+            }
+            base.Move(count);
+            return this;
+        }
+
+        public NodeWalker MoveToProcedure(int count = 1)
+        {
+            return (NodeWalker)MoveTo(t => t.IsProcedure(), count);
+        }
+
+        public Node Walk(params NodeType[] ofTypes)
+        {
+            Node p;
+            while (!IsEnded && (p = base.Walk()) != null)
+            {
+                if (ofTypes.Length == 0) return p;
+                foreach (var v in ofTypes)
+                    if ((v & p.Type) == v) return p;
+            }
+            return new Node();
+        }
+
+        public Node WalkToProcedure()
+        {
+            return WalkTo(t => t.IsProcedure());
+        }
     }
 }

@@ -8,7 +8,7 @@ namespace MiMFa.Compiler.Model
         Unknown = 0,
         None = 1 << 0,
 
-        Structure = 1 << 1,
+        Statement = 1 << 1,
 
         Start = 1 << 2,
         Prefix = 1 << 3,

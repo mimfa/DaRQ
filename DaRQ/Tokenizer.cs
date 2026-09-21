@@ -158,7 +158,7 @@ namespace MiMFa.Compiler.DaRQ
                         case "end":
                             ReservesScrubber(word);
                             walker.Move(word.Length);
-                            return GetAcceptedToken(TokenType.Structure, word, location);
+                            return GetAcceptedToken(TokenType.Statement, word, location);
                         
                         case "as":
                             ReservesScrubber(word);
@@ -210,7 +210,7 @@ namespace MiMFa.Compiler.DaRQ
                     if (current == "#")
                     {
                         walker.WalkWhile(w => w == "#").ToArray();
-                        return GetAcceptedToken(TokenType.Structure, current, location);
+                        return GetAcceptedToken(TokenType.Statement, current, location);
                     }
 
                     //if (current == ":")
@@ -233,14 +233,14 @@ namespace MiMFa.Compiler.DaRQ
             else return base.TokenizeCode(walker);
         }
 
-        protected virtual Token TokenizeXPath(CodeWalker walker, Location location)
+        protected virtual Token TokenizeXPath(CodeWalker walker, Position location)
         {
             walker.Walk();
             var value = string.Concat(walker.WalkUntil(ch => ch == "\\" && walker.Peek(-1) != Compiler?.Options?.Escape).ToArray());
             walker.Walk();
             return GetAcceptedToken(TokenType.StringData, value, location);
         }
-        protected virtual Token TokenizePath(CodeWalker walker, Location location)
+        protected virtual Token TokenizePath(CodeWalker walker, Position location)
         {
             var value = string.Concat(walker.WalkUntil(ch => string.IsNullOrWhiteSpace(ch)).ToArray());
             return GetAcceptedToken(TokenType.StringData, value, location);
@@ -340,7 +340,7 @@ namespace MiMFa.Compiler.DaRQ
                     return TokenType.None;
 
                 case "s":
-                    return TokenType.Structure;
+                    return TokenType.Statement;
 
                 case "y":
                     return TokenType.Symbol;
@@ -403,7 +403,7 @@ namespace MiMFa.Compiler.DaRQ
             if (dataAcceptor.HasValue) DataAcceptors[name] = dataAcceptor.Value;
             CaseAcceptors[lname] = name;
         }
-        protected virtual Token GetAcceptedToken(TokenType type, string name, Location location = null)
+        protected virtual Token GetAcceptedToken(TokenType type, string name, Position location = null)
         {
             string lname = name.ToLower();
             bool iscommand = LastToken == null || (
@@ -421,7 +421,7 @@ namespace MiMFa.Compiler.DaRQ
         }
 
 
-        protected virtual bool ReservesApplier(CodeWalker walker, string word, Location location)
+        protected virtual bool ReservesApplier(CodeWalker walker, string word, Position location)
         {
             try
             {
